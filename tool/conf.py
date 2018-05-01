@@ -13,4 +13,5 @@ class Conf:
         return self._c
 
     def get_github_configuration(self):
+        # TODO: implement proper validation
         return self.c["github"]
