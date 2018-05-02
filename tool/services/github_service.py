@@ -1,7 +1,12 @@
+import json
 import logging
+import re
+
+import time
 
 from tool.service import Service
-from tool.utils import clone_repo_and_cd_inside, set_upstream_remote, set_origin_remote, fetch_all
+from tool.utils import clone_repo_and_cd_inside, set_upstream_remote, set_origin_remote, fetch_all, \
+    prompt_for_pr_content, get_commit_msgs
 
 import github
 
@@ -9,12 +14,32 @@ import github
 logger = logging.getLogger(__name__)
 
 
+def get_github_full_name(repo_url):
+    """ convert remote url into a <namespace>/<repo> """
+    s = re.sub(r"^[a-zA-Z0-9:/@]+?github.com.", "", repo_url)
+    return re.sub(r"\.git$", "", s)
+
+
 class GithubService(Service):
-    def __init__(self, token=None):
+    name = "github"
+
+    def __init__(self, token=None, full_repo_name=None):
         super().__init__(token=token)
 
         self.g = github.Github(login_or_token=self.token)
         self.user = self.g.get_user()
+        self.repo = None
+        if full_repo_name:
+            self.repo = self.g.get_repo(full_repo_name)
+
+    @classmethod
+    def create_from_remote_url(cls, remote_url, **kwargs):
+        """ create instance of service from provided remote_url """
+        if "github.com" not in remote_url:
+            return None
+        full_repo_name = get_github_full_name(remote_url)
+        logger.debug("github repo name: %s", full_repo_name)
+        return cls(full_repo_name=full_repo_name, **kwargs)
 
     def _is_fork_of(self, user_repo, target_repo):
         """ is provided repo fork of gh.com/{parent_repo}/? """
@@ -60,4 +85,28 @@ class GithubService(Service):
         logger.info("forking repo %s", target_repo)
         return self.user.create_fork(target_repo)
 
+    def create_pull_request(self, target_remote, target_branch, current_branch):
+        """
+        TODO: push as well
 
+        :param current_branch:
+        :return:
+        """
+        head = "{}:{}".format(self.user.login, current_branch)
+        logger.debug("PR head is: %s", head)
+
+        base = "{}/{}".format(target_remote, target_branch)
+
+        title, body = prompt_for_pr_content(get_commit_msgs(base))
+
+        opts = {
+            "title": title,
+            "body": body,
+            "base": base,
+            "head": head,
+        }
+        logger.debug("PR to be created: %s", json.dumps(opts, indent=2))
+        # TODO: configurable, prompt instead maybe?
+        time.sleep(4.0)
+        pr = self.repo.create_pull(**opts)
+        logger.info("PR link: %s", pr.html_url)

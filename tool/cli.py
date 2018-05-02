@@ -41,7 +41,20 @@ def fork(service, repo):
     s.fork(repo)
 
 
+@click.command(name="create-pr")
+@click.argument('target_remote', type=click.STRING, required=False, default="upstream")
+@click.argument('target_branch', type=click.STRING, required=False, default="master")
+def create_pr(target_remote, target_branch):
+    """
+    Fork selected repository
+    """
+    a = App()
+    s = a.guess_service(target_remote)
+    s.create_pull_request(target_remote, target_branch, a.get_current_branch())
+
+
 tool.add_command(fork)
+tool.add_command(create_pr)
 
 
 if __name__ == '__main__':
