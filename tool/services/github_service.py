@@ -44,7 +44,7 @@ class GithubService(Service):
     def _is_fork_of(self, user_repo, target_repo):
         """ is provided repo fork of gh.com/{parent_repo}/? """
         return user_repo.fork and user_repo.parent and \
-            user_repo.parent.full_name == target_repo.full_name
+               user_repo.parent.full_name == target_repo
 
     def fork(self, target_repo):
 
