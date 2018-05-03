@@ -10,7 +10,6 @@ from tool.utils import clone_repo_and_cd_inside, set_upstream_remote, set_origin
 
 import github
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -102,7 +101,7 @@ class GithubService(Service):
         opts = {
             "title": title,
             "body": body,
-            "base": base,
+            "base": target_branch,
             "head": head,
         }
         logger.debug("PR to be created: %s", json.dumps(opts, indent=2))
