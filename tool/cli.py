@@ -30,7 +30,8 @@ def tool():
 
 
 @click.command(name="fork")
-@click.argument('service', type=click.STRING)  # TODO: this could be optional, we can have default
+@click.option('--service', "-s", type=click.Choice(['github']), default="github",
+              help="Name of the git service (e.g. github/gitlab).")
 @click.argument('repo', type=click.STRING)
 def fork(service, repo):
     """
@@ -55,7 +56,6 @@ def create_pr(target_remote, target_branch):
 
 tool.add_command(fork)
 tool.add_command(create_pr)
-
 
 if __name__ == '__main__':
     tool()
