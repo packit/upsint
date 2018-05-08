@@ -18,7 +18,6 @@
 import logging
 
 import click
-
 from tool.core import App
 
 logger = logging.getLogger("tool")
@@ -30,7 +29,7 @@ def tool():
 
 
 @click.command(name="fork")
-@click.option('--service', "-s", type=click.Choice(['github']), default="github",
+@click.option('--service', "-s", type=click.STRING, default="github",
               help="Name of the git service (e.g. github/gitlab).")
 @click.argument('repo', type=click.STRING)
 def fork(service, repo):

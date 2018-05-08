@@ -1,6 +1,7 @@
 from tool.conf import Conf
 from tool.services.github_service import GithubService
-from tool.utils import get_remote_url, get_current_branch_name
+from tool.services.gitlab_service import GitlabService
+from tool.utils import get_current_branch_name, get_remote_url
 
 
 class App:
@@ -11,7 +12,10 @@ class App:
         map = {
             "github": GithubService
         }
-        ServiceClass = map[service_name]
+        if service_name.startswith("gitlab"):
+            ServiceClass = GitlabService
+        else:
+            ServiceClass = map[service_name]
         configuration = self.conf.c[service_name]
         return ServiceClass(**configuration)
 
