@@ -2,21 +2,35 @@ import logging
 import os
 import subprocess
 import tempfile
+from time import sleep
+
+from tool.constant import CLONE_TIMEOUT
 
 logger = logging.getLogger(__name__)
 
 
-def clone_repo_and_cd_inside(repo, namespace):
+def clone_repo_and_cd_inside(repo_name, repo_ssh_url, namespace):
     os.makedirs(namespace, exist_ok=True)
     os.chdir(namespace)
-    logger.debug("clone %s", repo.ssh_url)
-    retcode = subprocess.call(["git", "clone", repo.ssh_url])
+    logger.debug("clone %s", repo_ssh_url)
+
+    for _ in range(CLONE_TIMEOUT):
+        proc = subprocess.Popen(["git", "clone", repo_ssh_url],
+                                stderr=subprocess.PIPE)
+        output = proc.stderr.read().decode()
+        logger.debug("Clone exited with {} and output: {}".format(proc.returncode, output))
+        if "does not exist yet" not in output:
+            break
+        sleep(1)
+    else:
+        logger.error("Clone failed.")
+        raise Exception("Clone failed")
+
     # if the repo is already cloned, it's not an issue
-    logger.debug("clone return code: %s", retcode)
-    os.chdir(repo.name)
+    os.chdir(repo_name)
 
 
-def set_upstream_remote(clone_url, ssh_url):
+def set_upstream_remote(clone_url, ssh_url, pull_merge_name):
     logger.debug("set remote upstream to %s", clone_url)
     try:
         subprocess.check_call(["git", "remote", "add", "upstream", clone_url])
@@ -28,15 +42,17 @@ def set_upstream_remote(clone_url, ssh_url):
         subprocess.check_call(["git", "remote", "set-url", "upstream-w", ssh_url])
     logger.debug("adding fetch rule to get PRs for upstream")
     subprocess.check_call(["git", "config", "--local", "--add", "remote.upstream.fetch",
-                           "+refs/pull/*/head:refs/remotes/upstream/pr/*"])
+                           "+refs/{}/*/head:refs/remotes/upstream/{}r/*".format(pull_merge_name,
+                                                                                pull_merge_name[0])])
 
 
-def set_origin_remote(ssh_url):
+def set_origin_remote(ssh_url, pull_merge_name):
     logger.debug("set remote origin to %s", ssh_url)
     subprocess.check_call(["git", "remote", "set-url", "origin", ssh_url])
     logger.debug("adding fetch rule to get PRs for origin")
     subprocess.check_call(["git", "config", "--local", "--add", "remote.origin.fetch",
-                           "+refs/pull/*/head:refs/remotes/origin/pr/*"])
+                           "+refs/{}/*/head:refs/remotes/origin/{}r/*".format(pull_merge_name,
+                                                                              pull_merge_name[0])])
 
 
 def fetch_all():
