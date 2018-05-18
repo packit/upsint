@@ -109,3 +109,4 @@ class GithubService(Service):
         time.sleep(4.0)
         pr = self.repo.create_pull(**opts)
         logger.info("PR link: %s", pr.html_url)
+        return pr.html_url
