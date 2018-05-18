@@ -6,12 +6,12 @@ We use this tool to ease our development workflow:
 
  * Fork GitHub repositories
  * Create pull requests
+ * List pull requests
 
 
 ## TODO
 
  * Rename!!
- * List pull requests
  * List releases
  * Check out a PR
  * Implement for Gitlab

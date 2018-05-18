@@ -17,8 +17,11 @@
 
 import logging
 
-import click
 from tool.core import App
+
+import click
+from tabulate import tabulate
+
 
 logger = logging.getLogger("tool")
 
@@ -49,13 +52,38 @@ def create_pr(target_remote, target_branch):
     Fork selected repository
     """
     a = App()
-    s = a.guess_service(target_remote)
+    s = a.guess_service(remote=target_remote)
     pr_url = s.create_pull_request(target_remote, target_branch, a.get_current_branch())
     print(pr_url)
 
 
+@click.command(name="list-prs")
+@click.option('--service', "-s", type=click.STRING, default="github",
+              help="Name of the git service (e.g. github/gitlab).")
+@click.argument('repo', type=click.STRING, required=False)
+def list_prs(service, repo):
+    """
+    List pull requests of a selected repository, default to repo in $PWD
+    """
+    a = App()
+    if repo:
+        s = a.get_service(service, repo=repo)
+    else:
+        s = a.guess_service()
+    prs = s.list_pull_requests()
+    print(tabulate([
+        (
+            "#%s" % pr.number,
+            pr.title,
+            "@%s" % pr.user.login
+        )
+        for pr in prs
+    ], tablefmt="fancy_grid"))
+
+
 tool.add_command(fork)
 tool.add_command(create_pr)
+tool.add_command(list_prs)
 
 if __name__ == '__main__':
     tool()
