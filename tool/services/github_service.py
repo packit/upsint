@@ -1,14 +1,13 @@
 import json
 import logging
 import re
-
 import time
 
-from tool.service import Service
-from tool.utils import clone_repo_and_cd_inside, set_upstream_remote, set_origin_remote, fetch_all, \
-    prompt_for_pr_content, get_commit_msgs
-
 import github
+from tool.service import Service
+from tool.utils import (clone_repo_and_cd_inside, fetch_all, get_commit_msgs,
+                        prompt_for_pr_content, set_origin_remote,
+                        set_upstream_remote)
 
 logger = logging.getLogger(__name__)
 
@@ -64,14 +63,16 @@ class GithubService(Service):
             # user wants to fork its own repo; let's just set up remotes 'n stuff
             if not user_repo:
                 raise RuntimeError("repo %s not found" % target_repo_name)
-            clone_repo_and_cd_inside(user_repo, target_repo_org)
+            clone_repo_and_cd_inside(user_repo.name, user_repo.ssh_url, target_repo_org)
         else:
             user_repo = self._fork_gracefully(target_repo_gh)
 
-            clone_repo_and_cd_inside(user_repo, target_repo_org)
+            clone_repo_and_cd_inside(user_repo.name, user_repo.ssh_url, target_repo_org)
 
-            set_upstream_remote(target_repo_gh.clone_url, target_repo_gh.ssh_url)
-        set_origin_remote(user_repo.ssh_url)
+            set_upstream_remote(clone_url=target_repo_gh.clone_url,
+                                ssh_url=target_repo_gh.ssh_url,
+                                pull_merge_name="pull")
+        set_origin_remote(user_repo.ssh_url, pull_merge_name="pull")
         fetch_all()
 
     def _fork_gracefully(self, target_repo):
