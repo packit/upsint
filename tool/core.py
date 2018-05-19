@@ -21,7 +21,7 @@ class App:
         return ServiceClass(**configuration)
 
     # TODO: change to remote=None and iterate over all remotes
-    def guess_service(self, remote="origin"):
+    def guess_service(self, remote="upstream"):
         service_classes = [
             GithubService
         ]

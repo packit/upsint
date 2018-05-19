@@ -57,7 +57,9 @@ def create_pr(target_remote, target_branch):
     print(pr_url)
 
 
-@click.command(name="list-prs")
+@click.command(name="list-prs",
+               help="List open pull requests in current git repository or the one you selected. "
+                    "This is how you can select a repository for Github: <namespace>/<project>.")
 @click.option('--service', "-s", type=click.STRING, default="github",
               help="Name of the git service (e.g. github/gitlab).")
 @click.argument('repo', type=click.STRING, required=False)
@@ -71,11 +73,15 @@ def list_prs(service, repo):
     else:
         s = a.guess_service()
     prs = s.list_pull_requests()
+    if not prs:
+        print("No open pull requests.")
+        return
     print(tabulate([
         (
             "#%s" % pr.number,
             pr.title,
-            "@%s" % pr.user.login
+            "@%s" % pr.user.login,
+            pr.html_url
         )
         for pr in prs
     ], tablefmt="fancy_grid"))
