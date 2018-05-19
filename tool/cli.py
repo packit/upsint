@@ -50,7 +50,8 @@ def create_pr(target_remote, target_branch):
     """
     a = App()
     s = a.guess_service(target_remote)
-    s.create_pull_request(target_remote, target_branch, a.get_current_branch())
+    pr_url = s.create_pull_request(target_remote, target_branch, a.get_current_branch())
+    print(pr_url)
 
 
 tool.add_command(fork)
