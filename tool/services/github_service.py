@@ -111,3 +111,6 @@ class GithubService(Service):
         pr = self.repo.create_pull(**opts)
         logger.info("PR link: %s", pr.html_url)
         return pr.html_url
+
+    def list_pull_requests(self):
+        return list(self.repo.get_pulls(state="open", sort="updated", direction="desc"))
