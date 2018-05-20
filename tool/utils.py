@@ -2,6 +2,7 @@ import logging
 import os
 import subprocess
 import tempfile
+import datetime
 from time import sleep
 
 from tool.constant import CLONE_TIMEOUT
@@ -108,6 +109,28 @@ def prompt_for_pr_content(commit_msgs):
     logger.debug('title: %s', title)
     logger.debug('body: %s', body)
     return title, body.strip()
+
+
+def list_local_branches():
+    """ return a list of dicts """
+    fmt = "%(refname:short);%(upstream:short);%(authordate:iso-strict);%(upstream:track)"
+    for_each_ref = subprocess.check_output(
+        ["git", "for-each-ref", "--format", fmt, "refs/heads/"]
+    ).decode("utf-8").strip().split("\n")
+    response = []
+    was_merged = subprocess.check_output(
+        ["git", "branch", "--merged", "master", "--format", "%(refname:short)"]
+    ).decode("utf-8").strip().split("\n")
+    for li in for_each_ref:
+        fields = li.split(";")
+        response.append({
+            "name": fields[0],
+            "remote_tracking": fields[1],
+            "date": datetime.datetime.strptime(fields[2][:-6], "%Y-%m-%dT%H:%M:%S"),
+            "tracking_status": fields[3],
+            "merged": "merged" if fields[0] in was_merged else "",
+        })
+    return response
 
 
 def get_current_branch_name():

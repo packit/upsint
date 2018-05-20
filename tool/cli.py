@@ -87,9 +87,24 @@ def list_prs(service, repo):
     ], tablefmt="fancy_grid"))
 
 
+@click.command(name="list-branches",
+               help="List branches in the local repository. Fields in the table: branch name, "
+                    "remote tracking branch, date, divergance status and "
+                    "whether the branch was merged to master."
+               )
+def list_branches():
+    """
+    List git branches in current git repository
+    """
+    a = App()
+    print(tabulate(a.list_branches(), tablefmt="fancy_grid"))
+
+
 tool.add_command(fork)
 tool.add_command(create_pr)
 tool.add_command(list_prs)
+tool.add_command(list_branches)
+
 
 if __name__ == '__main__':
     tool()
