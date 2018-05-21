@@ -1,4 +1,0 @@
-[bandit]
-skips: B101
-exclude: /docs
-
