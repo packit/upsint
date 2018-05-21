@@ -7,6 +7,7 @@ We use this tool to ease our development workflow:
  * Fork GitHub repositories
  * Create pull requests
  * List pull requests
+ * List local branches and print additional metadata
 
 
 ## TODO

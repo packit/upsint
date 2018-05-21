@@ -1,7 +1,7 @@
 from tool.conf import Conf
 from tool.services.github_service import GithubService
 from tool.services.gitlab_service import GitlabService
-from tool.utils import get_current_branch_name, get_remote_url
+from tool.utils import get_current_branch_name, get_remote_url, list_local_branches
 
 
 class App:
@@ -20,7 +20,7 @@ class App:
         configuration["full_repo_name"] = repo
         return ServiceClass(**configuration)
 
-    # TODO: change to remote=None and iterate over all remotes
+    # TODO: change to remote=None and iterate over all remotes fallback to upstream and origin
     def guess_service(self, remote="upstream"):
         service_classes = [
             GithubService
@@ -33,3 +33,14 @@ class App:
 
     def get_current_branch(self):
         return get_current_branch_name()
+
+    def list_branches(self):
+        """
+        provide a list of branches with additional metadata
+
+        :return dict {
+            "name": "master",
+            "remote_tracking": "origin",  # can be None
+        }
+        """
+        return sorted(list_local_branches(), key=lambda x: x["date"], reverse=True)
