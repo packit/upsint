@@ -73,10 +73,4 @@ class GitlabService(Service):
         return fork
 
     def create_pull_request(self, target_remote, target_branch, current_branch):
-        """
-        TODO: push as well
-
-        :param current_branch:
-        :return:
-        """
-        pass
+        raise NotImplementedError("Creating PRs for GitLab is not implemented yet.")

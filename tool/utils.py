@@ -142,3 +142,10 @@ def get_commit_msgs(branch):
     return subprocess.check_output(
         ["git", "log", "--pretty=format:%B%n%n",
          "%s..HEAD" % branch]).decode("utf-8").strip()
+
+
+def git_push():
+    """ perform `git push` """
+    # it would make sense to do `git push -u`
+    # this command NEEDS to be configurable
+    subprocess.check_call(["git", "push", "-q"])

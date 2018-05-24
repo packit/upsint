@@ -7,7 +7,7 @@ import github
 from tool.service import Service
 from tool.utils import (clone_repo_and_cd_inside, fetch_all, get_commit_msgs,
                         prompt_for_pr_content, set_origin_remote,
-                        set_upstream_remote)
+                        set_upstream_remote, git_push)
 
 logger = logging.getLogger(__name__)
 
@@ -87,15 +87,20 @@ class GithubService(Service):
 
     def create_pull_request(self, target_remote, target_branch, current_branch):
         """
-        TODO: push as well
+        create pull request on repo specified in target_remote against target_branch
+        from current_branch
 
-        :param current_branch:
-        :return:
+        :param target_remote: str, git remote to create PR against
+        :param target_branch: str, git branch to create PR against
+        :param current_branch: str, local branch with the changes
+        :return: URL to the PR
         """
         head = "{}:{}".format(self.user.login, current_branch)
         logger.debug("PR head is: %s", head)
 
         base = "{}/{}".format(target_remote, target_branch)
+
+        git_push()
 
         title, body = prompt_for_pr_content(get_commit_msgs(base))
 
