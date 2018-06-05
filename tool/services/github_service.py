@@ -21,23 +21,18 @@ def get_github_full_name(repo_url):
 class GithubService(Service):
     name = "github"
 
-    def __init__(self, token=None, full_repo_name=None):
-        super().__init__(token=token)
+    def __init__(self, token=None, repo_name=None, url=None, remote_url=None):
+        super().__init__(token=token, repo_name=repo_name, url=url, remote_url=remote_url)
 
         self.g = github.Github(login_or_token=self.token)
         self.user = self.g.get_user()
         self.repo = None
-        if full_repo_name:
-            self.repo = self.g.get_repo(full_repo_name)
-
-    @classmethod
-    def create_from_remote_url(cls, remote_url, **kwargs):
-        """ create instance of service from provided remote_url """
-        if "github.com" not in remote_url:
-            return None
-        full_repo_name = get_github_full_name(remote_url)
-        logger.debug("github repo name: %s", full_repo_name)
-        return cls(full_repo_name=full_repo_name, **kwargs)
+        if self.repo_name:
+            self.repo = self.g.get_repo(self.repo_name)
+        elif self.remote_url:
+            self.repo_name = get_github_full_name(self.remote_url)
+            logger.debug("github repo name: %s", self.repo_name)
+            self.repo = self.g.get_repo(self.repo_name)
 
     def _is_fork_of(self, user_repo, target_repo):
         """ is provided repo fork of gh.com/{parent_repo}/? """

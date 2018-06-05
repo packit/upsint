@@ -27,19 +27,22 @@ logger = logging.getLogger("tool")
 
 
 @click.group()
-def tool():
-    pass
+@click.option('--service', "-s", type=click.STRING, default="github",
+              help="Name of the git service (e.g. github/gitlab).")
+@click.pass_context
+def tool(ctx, service):
+    ctx.obj["service"] = service
 
 
 @click.command(name="fork")
-@click.option('--service', "-s", type=click.STRING, default="github",
-              help="Name of the git service (e.g. github/gitlab).")
 @click.argument('repo', type=click.STRING)
-def fork(service, repo):
+@click.pass_context
+def fork(ctx, repo):
     """
     Fork selected repository
     """
     a = App()
+    service = ctx["service"]
     s = a.get_service(service)
     s.fork(repo)
 
@@ -47,11 +50,13 @@ def fork(service, repo):
 @click.command(name="create-pr")
 @click.argument('target_remote', type=click.STRING, required=False, default="upstream")
 @click.argument('target_branch', type=click.STRING, required=False, default="master")
-def create_pr(target_remote, target_branch):
+@click.pass_context
+def create_pr(ctx, target_remote, target_branch):
     """
     Fork selected repository
     """
     a = App()
+    service = ctx["service"]
     s = a.guess_service(remote=target_remote)
     pr_url = s.create_pull_request(target_remote, target_branch, a.get_current_branch())
     print(pr_url)
@@ -60,14 +65,14 @@ def create_pr(target_remote, target_branch):
 @click.command(name="list-prs",
                help="List open pull requests in current git repository or the one you selected. "
                     "This is how you can select a repository for Github: <namespace>/<project>.")
-@click.option('--service', "-s", type=click.STRING, default="github",
-              help="Name of the git service (e.g. github/gitlab).")
 @click.argument('repo', type=click.STRING, required=False)
-def list_prs(service, repo):
+@click.pass_context
+def list_prs(ctx, repo):
     """
     List pull requests of a selected repository, default to repo in $PWD
     """
     a = App()
+    service = ctx["service"]
     if repo:
         s = a.get_service(service, repo=repo)
     else:
@@ -107,4 +112,4 @@ tool.add_command(list_branches)
 
 
 if __name__ == '__main__':
-    tool()
+    tool(obj={})

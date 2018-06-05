@@ -11,15 +11,21 @@ logger = logging.getLogger(__name__)
 class GitlabService(Service):
     name = "gitlab"
 
-    def __init__(self, token=None, url=None, full_repo_name=None):
-        super().__init__(token=token)
-        url = url or "https://gitlab.com"
-        self.g = gitlab.Gitlab(url=url, private_token=token)
+    def __init__(self, token=None, repo_name=None, url=None, remote_url=None):
+        super().__init__(token=token, repo_name=repo_name, url=url, remote_url=remote_url)
+        self.g = gitlab.Gitlab(url=self.url, private_token=self.token)
         self.g.auth()
         self.user = self.g.users.list(username=self.g.user.username)[0]
         self.repo = None
-        if full_repo_name:
-            self.repo = self.g.projects.get(full_repo_name)
+        if self.repo_name:
+            self.repo = self.g.projects.get(self.repo_name)
+
+    @classmethod
+    def is_this_the_service(cls, remote_url):
+        """ given the remote URL, is this the service which can handle the repo? """
+        if "gitlab.com" not in remote_url:
+            return False
+        return True
 
     @classmethod
     def create_from_remote_url(cls, remote_url, **kwargs):
