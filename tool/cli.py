@@ -100,11 +100,48 @@ def list_branches():
     print(tabulate(a.list_branches(), tablefmt="fancy_grid"))
 
 
+@click.command(name="labels",
+               help="List the labels for the project. "
+                    "This is how you can select a repository for Github: <namespace>/<project>.")
+@click.option('--service', "-s", type=click.STRING, default="github",
+              help="Name of the git service (e.g. github/gitlab).")
+@click.option('--copy', '-c', type=click.STRING, required=False, multiple=True,
+              help="Copy labels to another repo.")
+@click.argument('repo', type=click.STRING, required=False)
+def labels(service, forward, repo):
+    """
+    List the labels for the selected repository, default to repo in $PWD
+    """
+    a = App()
+    if repo:
+        s = a.get_service(service, repo=repo)
+    else:
+        s = a.guess_service()
+    labels = s.list_labels()
+    if not labels:
+        print("No labels requests.")
+        return
+    print(tabulate([
+        (
+            label.name,
+            label.color,
+            label.description
+        )
+        for label in labels
+    ], tablefmt="fancy_grid"))
+
+    for f in forward:
+        s = a.get_service(service, repo=f)
+        changes = s.update_labels(labels=labels)
+
+        click.echo(f"{changes} labels of {len(labels)} copied to {f}")
+
+
 tool.add_command(fork)
 tool.add_command(create_pr)
 tool.add_command(list_prs)
 tool.add_command(list_branches)
-
+tool.add_command(labels)
 
 if __name__ == '__main__':
     tool()

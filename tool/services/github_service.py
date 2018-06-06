@@ -130,3 +130,18 @@ class GithubService(Service):
                 'url': pr.html_url,
             }
             for pr in prs]
+
+    def list_labels(self):
+        return list(self.repo.get_labels())
+
+    def update_labels(self, labels):
+        current_label_names = [l.name for l in list(self.repo.get_labels())]
+        changes = 0
+        for l in labels:
+            if l.name not in current_label_names:
+                self.repo.create_label(name=l.name,
+                                       color=l.color,
+                                       description=l.description or "")
+
+                changes += 1
+        return changes
