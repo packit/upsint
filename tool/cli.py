@@ -108,7 +108,7 @@ def list_branches():
 @click.option('--copy', '-c', type=click.STRING, required=False, multiple=True,
               help="Copy labels to another repo.")
 @click.argument('repo', type=click.STRING, required=False)
-def labels(service, forward, repo):
+def labels(service, copy, repo):
     """
     List the labels for the selected repository, default to repo in $PWD
     """
@@ -117,8 +117,8 @@ def labels(service, forward, repo):
         s = a.get_service(service, repo=repo)
     else:
         s = a.guess_service()
-    labels = s.list_labels()
-    if not labels:
+    repo_labels = s.list_labels()
+    if not repo_labels:
         print("No labels requests.")
         return
     print(tabulate([
@@ -127,14 +127,18 @@ def labels(service, forward, repo):
             label.color,
             label.description
         )
-        for label in labels
+        for label in repo_labels
     ], tablefmt="fancy_grid"))
 
-    for f in forward:
-        s = a.get_service(service, repo=f)
-        changes = s.update_labels(labels=labels)
+    for repo_for_copy in copy:
+        other_serv = a.get_service(service, repo=repo_for_copy)
+        changes = other_serv.update_labels(labels=repo_labels)
 
-        click.echo(f"{changes} labels of {len(labels)} copied to {f}")
+        click.echo("{changes} labels of {labels_count} copied to {repo_name}".format(
+            changes=changes,
+            labels_count=len(repo_labels),
+            repo_name=repo_for_copy
+        ))
 
 
 tool.add_command(fork)
