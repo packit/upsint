@@ -6,5 +6,5 @@ check-pylint:
 	pylint tool || true
 
 check-bandit:
-	bandit . -r -c bandit.yml || true
+	bandit . -r || true
 
