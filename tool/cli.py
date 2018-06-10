@@ -78,10 +78,10 @@ def list_prs(service, repo):
         return
     print(tabulate([
         (
-            "#%s" % pr.number,
-            pr.title,
-            "@%s" % pr.user.login,
-            pr.html_url
+            "#%s" % pr['id'],
+            pr['title'],
+            "@%s" % pr['author'],
+            pr['url']
         )
         for pr in prs
     ], tablefmt="fancy_grid"))

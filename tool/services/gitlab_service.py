@@ -1,6 +1,7 @@
 import logging
 
 import gitlab
+
 from tool.service import Service
 from tool.utils import (clone_repo_and_cd_inside, fetch_all, set_origin_remote,
                         set_upstream_remote)
@@ -74,3 +75,16 @@ class GitlabService(Service):
 
     def create_pull_request(self, target_remote, target_branch, current_branch):
         raise NotImplementedError("Creating PRs for GitLab is not implemented yet.")
+
+    def list_pull_requests(self):
+        mrs = self.repo.mergerequests.list(state='opened',
+                                           order_by='updated_at',
+                                           sort='desc')
+        return [
+            {
+                'id': mr.iid,
+                'title': mr.title,
+                'author': mr.author['username'],
+                'url': mr.web_url,
+            }
+            for mr in mrs]
