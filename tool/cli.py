@@ -99,7 +99,7 @@ def list_branches():
     print(tabulate(a.list_branches(), tablefmt="fancy_grid"))
 
 
-@click.command(name="list_labels",
+@click.command(name="list-labels",
                help="List labels for the project. "
                     "This is how you can select a repository for Github: <namespace>/<project>.")
 @click.option('--service', "-s", type=click.STRING, default="github",
@@ -109,12 +109,12 @@ def list_labels(service, repo):
     """
     List the labels for the selected repository, default to repo in $PWD
     """
-    a = App()
+    app = App()
     if repo:
-        s = a.get_service(service, repo=repo)
+        serv = app.get_service(service, repo=repo)
     else:
-        s = a.guess_service()
-    repo_labels = s.list_labels()
+        serv = app.guess_service()
+    repo_labels = serv.list_labels()
     if not repo_labels:
         print("No labels.")
         return
@@ -128,31 +128,33 @@ def list_labels(service, repo):
     ], tablefmt="fancy_grid"))
 
 
-@click.command(name="update_labels",
+@click.command(name="update-labels",
                help="Update labels of other project. "
                     "Multiple destinations can be set by joining them with semicolon. "
                     "This is how you can select a repository for Github: <namespace>/<project>.")
 @click.option('--service', "-s", type=click.STRING, default="github",
+              help="Name of the git service for destination (e.g. github/gitlab).")
+@click.option('--source-service', type=click.STRING, default="github",
               help="Name of the git service (e.g. github/gitlab).")
 @click.argument('destination', type=click.STRING)
 @click.argument('source', type=click.STRING, required=False)
-def update_labels(service, destination, source):
+def update_labels(service, source_service, destination, source):
     """
     List the labels for the selected repository, default to repo in $PWD
     """
-    a = App()
+    app = App()
     if source:
-        s = a.get_service(service, repo=source)
+        serv = app.get_service(source_service, repo=source)
     else:
-        s = a.guess_service()
-    repo_labels = s.list_labels()
+        serv = app.guess_service()
+    repo_labels = serv.list_labels()
     if not repo_labels:
         print("No labels.")
         return
 
     dest_repos = destination.split(';')
     for repo_for_copy in dest_repos:
-        other_serv = a.get_service(service, repo=repo_for_copy)
+        other_serv = app.get_service(service, repo=repo_for_copy)
         changes = other_serv.update_labels(labels=repo_labels)
 
         click.echo("{changes} labels of {labels_count} copied to {repo_name}".format(
