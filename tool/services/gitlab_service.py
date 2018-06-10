@@ -49,11 +49,13 @@ class GitlabService(Service):
             # user wants to fork its own repo; let's just set up remotes 'n stuff
             if not user_repo:
                 raise RuntimeError("repo %s not found" % target_repo_name)
-            clone_repo_and_cd_inside(user_repo.path, user_repo.attributes['ssh_url_to_repo'], target_repo_org)
+            clone_repo_and_cd_inside(user_repo.path, user_repo.attributes['ssh_url_to_repo'],
+                                     target_repo_org)
         else:
             user_repo = user_repo or self._fork_gracefully(target_repo_gl)
 
-            clone_repo_and_cd_inside(user_repo.path, user_repo.attributes['ssh_url_to_repo'], target_repo_org)
+            clone_repo_and_cd_inside(user_repo.path, user_repo.attributes['ssh_url_to_repo'],
+                                     target_repo_org)
 
             set_upstream_remote(clone_url=target_repo_gl.attributes['http_url_to_repo'],
                                 ssh_url=target_repo_gl.attributes['ssh_url_to_repo'],
@@ -88,3 +90,28 @@ class GitlabService(Service):
                 'url': mr.web_url,
             }
             for mr in mrs]
+
+    def list_labels(self):
+        """
+        Get list of labels in the repository.
+        :return: [Label]
+        """
+        return list(self.repo.labels.list())
+
+    def update_labels(self, labels):
+        """
+        Update the labels of the repository. (No deletion, only add not existing ones.)
+
+        :param labels: [str]
+        :return: int - number of added labels
+        """
+        current_label_names = [l.name for l in list(self.repo.labels.list())]
+        changes = 0
+        for label in labels:
+            if label.name not in current_label_names:
+                self.repo.labels.create({'name': label.name,
+                                         'color': label.color,
+                                         'description': label.description or ""})
+
+                changes += 1
+        return changes
