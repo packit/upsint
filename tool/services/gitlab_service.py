@@ -109,9 +109,16 @@ class GitlabService(Service):
         changes = 0
         for label in labels:
             if label.name not in current_label_names:
+                color = self._normalize_label_color(color=label.color)
                 self.repo.labels.create({'name': label.name,
-                                         'color': label.color,
+                                         'color': color,
                                          'description': label.description or ""})
 
                 changes += 1
         return changes
+
+    @staticmethod
+    def _normalize_label_color(color):
+        if not color.startswith('#'):
+            return '#{}'.format(color)
+        return color

@@ -154,9 +154,16 @@ class GithubService(Service):
         changes = 0
         for label in labels:
             if label.name not in current_label_names:
+                color = self._normalize_label_color(color=label.color)
                 self.repo.create_label(name=label.name,
-                                       color=label.color,
+                                       color=color,
                                        description=label.description or "")
 
                 changes += 1
         return changes
+
+    @staticmethod
+    def _normalize_label_color(color):
+        if color.startswith('#'):
+            return color[1:]
+        return color
