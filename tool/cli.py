@@ -22,7 +22,6 @@ from tool.core import App
 import click
 from tabulate import tabulate
 
-
 logger = logging.getLogger("tool")
 
 
@@ -100,15 +99,13 @@ def list_branches():
     print(tabulate(a.list_branches(), tablefmt="fancy_grid"))
 
 
-@click.command(name="labels",
-               help="List the labels for the project. "
+@click.command(name="list_labels",
+               help="List labels for the project. "
                     "This is how you can select a repository for Github: <namespace>/<project>.")
 @click.option('--service', "-s", type=click.STRING, default="github",
               help="Name of the git service (e.g. github/gitlab).")
-@click.option('--copy', '-c', type=click.STRING, required=False, multiple=True,
-              help="Copy labels to another repo.")
 @click.argument('repo', type=click.STRING, required=False)
-def labels(service, copy, repo):
+def list_labels(service, repo):
     """
     List the labels for the selected repository, default to repo in $PWD
     """
@@ -119,7 +116,7 @@ def labels(service, copy, repo):
         s = a.guess_service()
     repo_labels = s.list_labels()
     if not repo_labels:
-        print("No labels requests.")
+        print("No labels.")
         return
     print(tabulate([
         (
@@ -130,7 +127,31 @@ def labels(service, copy, repo):
         for label in repo_labels
     ], tablefmt="fancy_grid"))
 
-    for repo_for_copy in copy:
+
+@click.command(name="update_labels",
+               help="Update labels of other project. "
+                    "Multiple destinations can be set by joining them with semicolon. "
+                    "This is how you can select a repository for Github: <namespace>/<project>.")
+@click.option('--service', "-s", type=click.STRING, default="github",
+              help="Name of the git service (e.g. github/gitlab).")
+@click.argument('destination', type=click.STRING)
+@click.argument('source', type=click.STRING, required=False)
+def update_labels(service, destination, source):
+    """
+    List the labels for the selected repository, default to repo in $PWD
+    """
+    a = App()
+    if source:
+        s = a.get_service(service, repo=source)
+    else:
+        s = a.guess_service()
+    repo_labels = s.list_labels()
+    if not repo_labels:
+        print("No labels.")
+        return
+
+    dest_repos = destination.split(';')
+    for repo_for_copy in dest_repos:
         other_serv = a.get_service(service, repo=repo_for_copy)
         changes = other_serv.update_labels(labels=repo_labels)
 
@@ -145,7 +166,8 @@ tool.add_command(fork)
 tool.add_command(create_pr)
 tool.add_command(list_prs)
 tool.add_command(list_branches)
-tool.add_command(labels)
+tool.add_command(list_labels)
+tool.add_command(update_labels)
 
 if __name__ == '__main__':
     tool()
