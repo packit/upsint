@@ -4,6 +4,7 @@ import re
 import time
 
 import github
+
 from tool.service import Service
 from tool.utils import (clone_repo_and_cd_inside, fetch_all, get_commit_msgs,
                         prompt_for_pr_content, set_origin_remote,
@@ -118,4 +119,14 @@ class GithubService(Service):
         return pr.html_url
 
     def list_pull_requests(self):
-        return list(self.repo.get_pulls(state="open", sort="updated", direction="desc"))
+        prs = self.repo.get_pulls(state="open",
+                                  sort="updated",
+                                  direction="desc")
+        return [
+            {
+                'id': pr.number,
+                'title': pr.title,
+                'author': pr.user.login,
+                'url': pr.html_url,
+            }
+            for pr in prs]
