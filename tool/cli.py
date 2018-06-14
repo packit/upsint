@@ -132,19 +132,19 @@ def list_labels(service, repo):
                help="Update labels of other project. "
                     "Multiple destinations can be set by joining them with semicolon. "
                     "This is how you can select a repository for Github: <namespace>/<project>.")
-@click.option('--service', "-s", type=click.STRING, default="github",
-              help="Name of the git service for destination (e.g. github/gitlab).")
+@click.option('--source-repo', '-r', type=click.STRING)
 @click.option('--source-service', type=click.STRING, default="github",
               help="Name of the git service (e.g. github/gitlab).")
-@click.argument('destination', type=click.STRING)
-@click.argument('source', type=click.STRING, required=False)
-def update_labels(service, source_service, destination, source):
+@click.option('--service', "-s", type=click.STRING, default="github",
+              help="Name of the git service for destination (e.g. github/gitlab).")
+@click.argument('destination', type=click.STRING, nargs=-1)
+def update_labels(source_repo, service, source_service, destination):
     """
     List the labels for the selected repository, default to repo in $PWD
     """
     app = App()
-    if source:
-        serv = app.get_service(source_service, repo=source)
+    if source_repo:
+        serv = app.get_service(source_service, repo=source_repo)
     else:
         serv = app.guess_service()
     repo_labels = serv.list_labels()
@@ -152,8 +152,7 @@ def update_labels(service, source_service, destination, source):
         print("No labels.")
         return
 
-    dest_repos = destination.split(';')
-    for repo_for_copy in dest_repos:
+    for repo_for_copy in destination:
         other_serv = app.get_service(service, repo=repo_for_copy)
         changes = other_serv.update_labels(labels=repo_labels)
 
