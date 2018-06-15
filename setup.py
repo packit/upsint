@@ -14,6 +14,13 @@ with open("./tool/version.py") as fp:
 
 long_description = ''.join(open('README.md').readlines())
 
+
+def get_requirements():
+    """Parse all packages mentioned in the 'requirements.txt' file."""
+    with open('requirements.txt') as file_stream:
+        return file_stream.read().splitlines()
+
+
 setup(
     name='tool',
     version=version["__version__"],
@@ -21,10 +28,7 @@ setup(
     long_description=long_description,
     long_description_content_type='text/markdown',
     packages=find_packages(),
-    install_requires=[
-        'Click',
-        'python-gitlab'
-    ],
+    install_requires=get_requirements(),
     entry_points='''
         [console_scripts]
         tool=tool.cli:tool
