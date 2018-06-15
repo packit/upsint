@@ -119,6 +119,11 @@ class GithubService(Service):
         return pr.html_url
 
     def list_pull_requests(self):
+        """
+        Get list of pull-requests for the repository.
+
+        :return: [PullRequest]
+        """
         prs = self.repo.get_pulls(state="open",
                                   sort="updated",
                                   direction="desc")
@@ -130,3 +135,35 @@ class GithubService(Service):
                 'url': pr.html_url,
             }
             for pr in prs]
+
+    def list_labels(self):
+        """
+        Get list of labels in the repository.
+        :return: [Label]
+        """
+        return list(self.repo.get_labels())
+
+    def update_labels(self, labels):
+        """
+        Update the labels of the repository. (No deletion, only add not existing ones.)
+
+        :param labels: [str]
+        :return: int - number of added labels
+        """
+        current_label_names = [l.name for l in list(self.repo.get_labels())]
+        changes = 0
+        for label in labels:
+            if label.name not in current_label_names:
+                color = self._normalize_label_color(color=label.color)
+                self.repo.create_label(name=label.name,
+                                       color=color,
+                                       description=label.description or "")
+
+                changes += 1
+        return changes
+
+    @staticmethod
+    def _normalize_label_color(color):
+        if color.startswith('#'):
+            return color[1:]
+        return color
