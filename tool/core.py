@@ -9,16 +9,14 @@ class App:
         self.conf = Conf()
 
     def get_service(self, service_name, repo=None):
-        map = {
-            "github": GithubService
+        service_map = {
+            GithubService.name: GithubService,
+            GitlabService.name: GitlabService
         }
-        if service_name.startswith("gitlab"):
-            ServiceClass = GitlabService
-        else:
-            ServiceClass = map[service_name]
+        _class = service_map[service_name]
         configuration = self.conf.c[service_name]
         configuration["full_repo_name"] = repo
-        return ServiceClass(**configuration)
+        return _class(**configuration)
 
     # TODO: change to remote=None and iterate over all remotes fallback to upstream and origin
     def guess_service(self, remote="upstream"):
