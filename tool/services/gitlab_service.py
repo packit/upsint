@@ -39,9 +39,9 @@ class GitlabService(Service):
         try:
             # is it already forked?
             user_repo = self.g.projects.get("{}/{}".format(self.user.username, target_repo_name))
-            if not self._is_fork_of(user_repo, target_repo_gl):
-                raise RuntimeError("repo %s is not a fork of %s" % (target_repo_gl, user_repo))
-        except Exception as ex:
+            if not self.is_fork_of(user_repo, target_repo_gl):
+                raise RuntimeError("repo %s is not a fork of %s" % (user_repo, target_repo_gl))
+        except Exception:
             # nope
             user_repo = None
 

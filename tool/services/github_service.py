@@ -54,8 +54,8 @@ class GithubService(Service):
         try:
             # is it already forked?
             user_repo = self.user.get_repo(target_repo_name)
-            if not self._is_fork_of(user_repo, target_repo):
-                raise RuntimeError("repo %s is not a fork of %s" % (target_repo_gh, user_repo))
+            if not self.is_fork_of(user_repo, target_repo):
+                raise RuntimeError("repo %s is not a fork of %s" % (user_repo, target_repo_gh))
         except github.UnknownObjectException:
             # nope
             user_repo = None
