@@ -27,7 +27,8 @@ class GitlabService(Service):
         """ create instance of service from provided remote_url """
         raise NotImplementedError()
 
-    def _is_fork_of(self, user_repo, target_repo):
+    @staticmethod
+    def is_fork_of(user_repo, target_repo):
         """ is provided repo fork of the {parent_repo}/? """
         return user_repo.forked_from_project['id'] == target_repo.id
 
@@ -64,7 +65,8 @@ class GitlabService(Service):
                           pull_merge_name="merge-requests")
         fetch_all()
 
-    def _fork_gracefully(self, target_repo):
+    @staticmethod
+    def _fork_gracefully(target_repo):
         """ fork if not forked, return forked repo """
         try:
             logger.info("forking repo %s", target_repo)
