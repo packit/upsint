@@ -25,7 +25,7 @@ class GitlabService(Service):
     @classmethod
     def create_from_remote_url(cls, remote_url, **kwargs):
         """ create instance of service from provided remote_url """
-        pass
+        raise NotImplementedError()
 
     def _is_fork_of(self, user_repo, target_repo):
         """ is provided repo fork of the {parent_repo}/? """
