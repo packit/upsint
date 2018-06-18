@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 
 def get_github_full_name(repo_url):
-    """ convert remote url into a <namespace>/<repo> """
+    """ convert remote url into a <owner>/<repo> """
     s = re.sub(r"^[a-zA-Z0-9:/@]+?github.com.", "", repo_url)
     return re.sub(r"\.git$", "", s)
 
@@ -40,10 +40,11 @@ class GithubService(Service):
         logger.debug("github repo name: %s", full_repo_name)
         return cls(full_repo_name=full_repo_name, **kwargs)
 
-    def _is_fork_of(self, user_repo, target_repo):
+    @staticmethod
+    def is_fork_of(user_repo, target_repo):
         """ is provided repo fork of gh.com/{parent_repo}/? """
         return user_repo.fork and user_repo.parent and \
-               user_repo.parent.full_name == target_repo
+            user_repo.parent.full_name == target_repo
 
     def fork(self, target_repo):
 
@@ -54,8 +55,8 @@ class GithubService(Service):
         try:
             # is it already forked?
             user_repo = self.user.get_repo(target_repo_name)
-            if not self._is_fork_of(user_repo, target_repo):
-                raise RuntimeError("repo %s is not a fork of %s" % (target_repo_gh, user_repo))
+            if not self.is_fork_of(user_repo, target_repo):
+                raise RuntimeError("repo %s is not a fork of %s" % (user_repo, target_repo_gh))
         except github.UnknownObjectException:
             # nope
             user_repo = None

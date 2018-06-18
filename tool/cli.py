@@ -32,7 +32,8 @@ def tool():
 
 @click.command(name="fork")
 @click.option('--service', "-s", type=click.STRING, default="github",
-              help="Name of the git service (e.g. github/gitlab).")
+              help="Name of the git service (e.g. github/gitlab)."
+                   "This is how you can select a repository for Github: <owner>/<project>.")
 @click.argument('repo', type=click.STRING)
 def fork(service, repo):
     """
@@ -58,7 +59,7 @@ def create_pr(target_remote, target_branch):
 
 @click.command(name="list-prs",
                help="List open pull requests in current git repository or the one you selected. "
-                    "This is how you can select a repository for Github: <namespace>/<project>.")
+                    "This is how you can select a repository for Github: <owner>/<project>.")
 @click.option('--service', "-s", type=click.STRING, default="github",
               help="Name of the git service (e.g. github/gitlab).")
 @click.argument('repo', type=click.STRING, required=False)
@@ -88,7 +89,7 @@ def list_prs(service, repo):
 
 @click.command(name="list-branches",
                help="List branches in the local repository. Fields in the table: branch name, "
-                    "remote tracking branch, date, divergance status and "
+                    "remote tracking branch, date, divergence status and "
                     "whether the branch was merged to master."
                )
 def list_branches():
@@ -101,7 +102,7 @@ def list_branches():
 
 @click.command(name="list-labels",
                help="List labels for the project. "
-                    "This is how you can select a repository for Github: <namespace>/<project>.")
+                    "This is how you can select a repository for Github: <owner>/<project>.")
 @click.option('--service', "-s", type=click.STRING, default="github",
               help="Name of the git service (e.g. github/gitlab).")
 @click.argument('repo', type=click.STRING, required=False)
@@ -131,7 +132,7 @@ def list_labels(service, repo):
 @click.command(name="update-labels",
                help="Update labels of other project. "
                     "Multiple destinations can be set by joining them with semicolon. "
-                    "This is how you can select a repository for Github: <namespace>/<project>.")
+                    "This is how you can select a repository for Github: <owner>/<project>.")
 @click.option('--source-repo', '-r', type=click.STRING)
 @click.option('--source-service', type=click.STRING, default="github",
               help="Name of the git service (e.g. github/gitlab).")
@@ -140,7 +141,7 @@ def list_labels(service, repo):
 @click.argument('destination', type=click.STRING, nargs=-1)
 def update_labels(source_repo, service, source_service, destination):
     """
-    List the labels for the selected repository, default to repo in $PWD
+    Update labels for the selected repository, default to repo in $PWD
     """
     app = App()
     if source_repo:

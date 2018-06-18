@@ -25,9 +25,10 @@ class GitlabService(Service):
     @classmethod
     def create_from_remote_url(cls, remote_url, **kwargs):
         """ create instance of service from provided remote_url """
-        pass
+        raise NotImplementedError()
 
-    def _is_fork_of(self, user_repo, target_repo):
+    @staticmethod
+    def is_fork_of(user_repo, target_repo):
         """ is provided repo fork of the {parent_repo}/? """
         return user_repo.forked_from_project['id'] == target_repo.id
 
@@ -39,9 +40,9 @@ class GitlabService(Service):
         try:
             # is it already forked?
             user_repo = self.g.projects.get("{}/{}".format(self.user.username, target_repo_name))
-            if not self._is_fork_of(user_repo, target_repo_gl):
-                raise RuntimeError("repo %s is not a fork of %s" % (target_repo_gl, user_repo))
-        except Exception as ex:
+            if not self.is_fork_of(user_repo, target_repo_gl):
+                raise RuntimeError("repo %s is not a fork of %s" % (user_repo, target_repo_gl))
+        except Exception:
             # nope
             user_repo = None
 
@@ -64,7 +65,8 @@ class GitlabService(Service):
                           pull_merge_name="merge-requests")
         fetch_all()
 
-    def _fork_gracefully(self, target_repo):
+    @staticmethod
+    def _fork_gracefully(target_repo):
         """ fork if not forked, return forked repo """
         try:
             logger.info("forking repo %s", target_repo)
