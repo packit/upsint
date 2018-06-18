@@ -9,6 +9,14 @@ We use this tool to ease our development workflow:
  * List pull requests
  * List local branches and print additional metadata
 
+Configuration is stored in `~/.tool.json`. Example:
+
+```json
+{
+    "github": {"token": "abcxyz"}
+}
+```
+
 
 ## TODO
 
