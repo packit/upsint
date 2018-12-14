@@ -163,6 +163,13 @@ class GithubService(Service):
                 changes += 1
         return changes
 
+    def list_tags(self):
+        """
+        Get list of tags in the repository.
+        :return:  [Tags]
+        """
+        return list(self.repo.get_tags())
+
     @staticmethod
     def _normalize_label_color(color):
         if color.startswith('#'):
