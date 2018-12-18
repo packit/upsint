@@ -150,8 +150,8 @@ def list_tags(service, repo):
         return
     print(tabulate([
         (
-            tag.name,
-            tag.tarball_url
+            tag['name'],
+            tag['url']
         )
         for tag in repo_tags
     ], tablefmt="fancy_grid"))
