@@ -13,7 +13,11 @@ Configuration is stored in `~/.tool.json`. Example:
 
 ```json
 {
-    "github": {"token": "abcxyz"}
+    "github": {"token": "abcxyz"},
+    "gitlab": {"token": "abcxyz",
+               "ssl_verify": "False",
+               "url": "url",
+               }
 }
 ```
 
