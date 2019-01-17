@@ -163,6 +163,18 @@ class GithubService(Service):
                 changes += 1
         return changes
 
+    def list_tags(self):
+        """
+        Get list of tags in the repository.
+        :return:  [Tags]
+        """
+        tags = []
+        for tag in self.repo.get_tags():
+            tags.append({'name': tag.name,
+                         'url': f"https://github.com/{self.repo.full_name}"
+                                f"/releases/tag/{tag.name}"})
+        return tags
+
     @staticmethod
     def _normalize_label_color(color):
         if color.startswith('#'):

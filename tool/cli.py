@@ -129,6 +129,34 @@ def list_labels(service, repo):
     ], tablefmt="fancy_grid"))
 
 
+@click.command(name="list-tags",
+               help="List tags for the project. "
+                    "This is how you can select a repository for Github: <owner>/<project>.")
+@click.option('--service', "-s", type=click.STRING, default="github",
+              help="Name of the git service (e.g. github/gitlab).")
+@click.argument('repo', type=click.STRING, required=False)
+def list_tags(service, repo):
+    """
+    List the tags for the selected repository, default to repo in $PWD
+    """
+    app = App()
+    if repo:
+        serv = app.get_service(service, repo=repo)
+    else:
+        serv = app.guess_service()
+    repo_tags = serv.list_tags()
+    if not repo_tags:
+        print("No tags.")
+        return
+    print(tabulate([
+        (
+            tag['name'],
+            tag['url']
+        )
+        for tag in repo_tags
+    ], tablefmt="fancy_grid"))
+
+
 @click.command(name="update-labels",
                help="Update labels of other project. "
                     "Multiple destinations can be set by joining them with semicolon. "
@@ -168,6 +196,7 @@ tool.add_command(fork)
 tool.add_command(create_pr)
 tool.add_command(list_prs)
 tool.add_command(list_branches)
+tool.add_command(list_tags)
 tool.add_command(list_labels)
 tool.add_command(update_labels)
 

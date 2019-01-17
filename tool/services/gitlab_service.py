@@ -12,10 +12,11 @@ logger = logging.getLogger(__name__)
 class GitlabService(Service):
     name = "gitlab"
 
-    def __init__(self, token=None, url=None, full_repo_name=None):
+    def __init__(self, token=None, url=None, ssl_verify=None, full_repo_name=None):
         super().__init__(token=token)
         url = url or "https://gitlab.com"
-        self.g = gitlab.Gitlab(url=url, private_token=token)
+        ssl_verify = ssl_verify or False
+        self.g = gitlab.Gitlab(url=url, private_token=token, ssl_verify=ssl_verify)
         self.g.auth()
         self.user = self.g.users.list(username=self.g.user.username)[0]
         self.repo = None
@@ -118,6 +119,18 @@ class GitlabService(Service):
 
                 changes += 1
         return changes
+
+    def list_tags(self):
+        """
+        Get list of tags in the repository.
+        :return:  [Tags]
+        """
+        tags = []
+        for tag in self.repo.tags.list():
+            tags.append({'name': tag.name,
+                         'url': f"{self.repo.web_url}"
+                                f"/tags/{tag.name}"})
+        return tags
 
     @staticmethod
     def _normalize_label_color(color):

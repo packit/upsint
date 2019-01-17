@@ -16,3 +16,7 @@ class Conf:
     def get_github_configuration(self):
         # TODO: implement proper validation
         return self.c["github"]
+
+    def get_gitlab_configuration(self):
+        # TODO: implement proper validation
+        return self.c["gitlab"]
