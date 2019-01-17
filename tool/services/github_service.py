@@ -172,7 +172,7 @@ class GithubService(Service):
         for tag in self.repo.get_tags():
             tags.append({'name': tag.name,
                          'url': f"https://github.com/{self.repo.full_name}"
-                                f"/release/tag/{tag.name}"})
+                                f"/releases/tag/{tag.name}"})
         return tags
 
     @staticmethod
