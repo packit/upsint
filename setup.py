@@ -25,6 +25,8 @@ setup(
     name='tool',
     version=version["__version__"],
     description="Easy way to git",
+    author='Red Hat',
+    author_email='user-cont-team@redhat.com',
     long_description=long_description,
     long_description_content_type='text/markdown',
     packages=find_packages(),
