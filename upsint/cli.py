@@ -92,12 +92,16 @@ def list_prs(service, repo):
                     "remote tracking branch, date, divergence status and "
                     "whether the branch was merged to master."
                )
-def list_branches():
+@click.option(
+    '--merged-with', type=click.STRING, default="master",
+    help="Was a branch merged with this one?"
+)
+def list_branches(merged_with):
     """
     List git branches in current git repository
     """
     a = App()
-    print(tabulate(a.list_branches(), tablefmt="fancy_grid"))
+    print(tabulate(a.list_branches(merged_with=merged_with), tablefmt="fancy_grid"))
 
 
 @click.command(name="list-labels",
