@@ -192,6 +192,39 @@ def update_labels(source_repo, service, source_service, destination):
         ))
 
 
+@click.command(name="remove-merged-branches")
+@click.argument('merged_with_branch', type=click.STRING, default="master")
+def remove_merged_branches(merged_with_branch):
+    """
+    Remove branches which are already merged (in master by default)
+
+    Argument MERGED_WITH_BRANCH defaults to master and checks whether
+    a branch was merged with this one
+    """
+    a = App()
+    to_remove = []
+    for branch_dict in a.list_branches(merged_with_branch):
+        branch_name = branch_dict["name"]
+        if branch_name == merged_with_branch or branch_name == branch_dict["remote_tracking"]:
+            # don't remove self or a local copy of remote branch
+            continue
+        if branch_dict["merged"] == "merged":
+            to_remove.append(branch_name)
+    if not to_remove:
+        print("Nothing to remove.")
+        return
+    print("Shall we remove these local branches?")
+    for b in to_remove:
+        print(f"* {b}")
+    inp = input("Y/N? ")
+    if inp in ("y", "Y", "yolo"):
+        print("Removing...")
+        for b in to_remove:
+            a.remove_branch(b)
+    else:
+        print("Doing nothing, stay safe my friend.")
+
+
 upsint.add_command(fork)
 upsint.add_command(create_pr)
 upsint.add_command(list_prs)
@@ -199,6 +232,8 @@ upsint.add_command(list_branches)
 upsint.add_command(list_tags)
 upsint.add_command(list_labels)
 upsint.add_command(update_labels)
+upsint.add_command(remove_merged_branches)
+
 
 if __name__ == '__main__':
     upsint()
