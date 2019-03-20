@@ -1,7 +1,7 @@
-from tool.conf import Conf
-from tool.services.github_service import GithubService
-from tool.services.gitlab_service import GitlabService
-from tool.utils import get_current_branch_name, get_remote_url, list_local_branches
+from upsint.conf import Conf
+from upsint.services.github_service import GithubService
+from upsint.services.gitlab_service import GitlabService
+from upsint.utils import get_current_branch_name, get_remote_url, list_local_branches
 
 
 class App:

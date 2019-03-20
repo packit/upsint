@@ -1,4 +1,4 @@
-# user-cont tool
+# upsint
 
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/7c4e622a12074303b4b8752f87ef0c80)](https://www.codacy.com/app/user-cont/tool?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=user-cont/tool&amp;utm_campaign=Badge_Grade)
 
@@ -9,7 +9,7 @@ We use this tool to ease our development workflow:
  * List pull requests
  * List local branches and print additional metadata
 
-Configuration is stored in `~/.tool.json`. Example:
+Configuration is stored in `~/.upsint.json`. Example:
 
 ```json
 {
@@ -24,7 +24,6 @@ Configuration is stored in `~/.tool.json`. Example:
 
 ## TODO
 
- * Rename!!
  * List releases
  * Check out a PR
  * Implement for Gitlab

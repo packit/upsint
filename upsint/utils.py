@@ -5,7 +5,7 @@ import tempfile
 import datetime
 from time import sleep
 
-from tool.constant import CLONE_TIMEOUT
+from upsint.constant import CLONE_TIMEOUT
 
 logger = logging.getLogger(__name__)
 

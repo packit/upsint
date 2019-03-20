@@ -17,16 +17,16 @@
 
 import logging
 
-from tool.core import App
+from upsint.core import App
 
 import click
 from tabulate import tabulate
 
-logger = logging.getLogger("tool")
+logger = logging.getLogger("upsint")
 
 
 @click.group()
-def tool():
+def upsint():
     pass
 
 
@@ -192,13 +192,13 @@ def update_labels(source_repo, service, source_service, destination):
         ))
 
 
-tool.add_command(fork)
-tool.add_command(create_pr)
-tool.add_command(list_prs)
-tool.add_command(list_branches)
-tool.add_command(list_tags)
-tool.add_command(list_labels)
-tool.add_command(update_labels)
+upsint.add_command(fork)
+upsint.add_command(create_pr)
+upsint.add_command(list_prs)
+upsint.add_command(list_branches)
+upsint.add_command(list_tags)
+upsint.add_command(list_labels)
+upsint.add_command(update_labels)
 
 if __name__ == '__main__':
-    tool()
+    upsint()
