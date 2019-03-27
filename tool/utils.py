@@ -73,10 +73,11 @@ def get_remote_url(remote):
     return remote, url.decode("utf-8").strip()
 
 
-def prompt_for_pr_content(commit_msgs):
+def prompt_for_pr_content(commit_msgs, title=None):
     t = tempfile.NamedTemporaryFile(delete=False, prefix='gh.')
     try:
-        template = "Title of this PR\n\nPR body:\n{}".format(commit_msgs)
+        title = title or "Title of this PR"
+        template = f"{title}\n\n{commit_msgs}\n\n"
         template_b = template.encode("utf-8")
         t.write(template_b)
         t.flush()

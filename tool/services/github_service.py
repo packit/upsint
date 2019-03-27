@@ -104,7 +104,8 @@ class GithubService(Service):
 
         git_push()
 
-        title, body = prompt_for_pr_content(get_commit_msgs(base))
+        pre_title = current_branch.replace("-", " ")
+        title, body = prompt_for_pr_content(get_commit_msgs(base), title=pre_title)
 
         opts = {
             "title": title,
