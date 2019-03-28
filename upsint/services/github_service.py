@@ -5,8 +5,8 @@ import time
 
 import github
 
-from tool.service import Service
-from tool.utils import (clone_repo_and_cd_inside, fetch_all, get_commit_msgs,
+from upsint.service import Service
+from upsint.utils import (clone_repo_and_cd_inside, fetch_all, get_commit_msgs,
                         prompt_for_pr_content, set_origin_remote,
                         set_upstream_remote, git_push)
 

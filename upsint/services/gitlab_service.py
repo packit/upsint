@@ -2,8 +2,8 @@ import logging
 
 import gitlab
 
-from tool.service import Service
-from tool.utils import (clone_repo_and_cd_inside, fetch_all, set_origin_remote,
+from upsint.service import Service
+from upsint.utils import (clone_repo_and_cd_inside, fetch_all, set_origin_remote,
                         set_upstream_remote)
 
 logger = logging.getLogger(__name__)

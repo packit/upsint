@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 # -*- coding: utf-8 -*-
 #
 # This program is free software: you can redistribute it and/or modify
@@ -14,4 +15,25 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-__version__ = "0.1.0-dev"
+import json
+import os
+
+
+class Conf:
+    def __init__(self):
+        self._c = None
+
+    @property
+    def c(self):
+        if self._c is None:
+            with open(os.path.expanduser("~/.upsint.json")) as fd:
+                self._c = json.load(fd)
+        return self._c
+
+    def get_github_configuration(self):
+        # TODO: implement proper validation
+        return self.c["github"]
+
+    def get_gitlab_configuration(self):
+        # TODO: implement proper validation
+        return self.c["gitlab"]

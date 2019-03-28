@@ -1,4 +1,0 @@
-click
-tabulate
-python-gitlab
-pygithub
