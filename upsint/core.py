@@ -17,7 +17,7 @@
 from upsint.conf import Conf
 from upsint.services.github_service import GithubService
 from upsint.services.gitlab_service import GitlabService
-from upsint.utils import get_current_branch_name, get_remote_url, list_local_branches
+from upsint.utils import get_current_branch_name, get_remote_url, list_local_branches, git_branch_d
 
 
 class App:
@@ -48,13 +48,22 @@ class App:
     def get_current_branch(self):
         return get_current_branch_name()
 
-    def list_branches(self):
+    def list_branches(self, merged_with: str = "master"):
         """
         provide a list of branches with additional metadata
 
+        :param merged_with: was a branch merged into this one?
         :return dict {
             "name": "master",
             "remote_tracking": "origin",  # can be None
         }
         """
-        return sorted(list_local_branches(), key=lambda x: x["date"], reverse=True)
+        return sorted(list_local_branches(merged_with), key=lambda x: x["date"], reverse=True)
+
+    def remove_branch(self, branch_name: str):
+        """
+        remove selected local branch
+
+        :param branch_name: guess what?
+        """
+        git_branch_d(branch_name)

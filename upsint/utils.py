@@ -20,6 +20,7 @@ import subprocess
 import tempfile
 import datetime
 from time import sleep
+from typing import Iterable, Dict
 
 from upsint.constant import CLONE_TIMEOUT
 
@@ -127,15 +128,20 @@ def prompt_for_pr_content(commit_msgs):
     return title, body.strip()
 
 
-def list_local_branches():
-    """ return a list of dicts """
+def list_local_branches(merged_with: str) -> Iterable[Dict]:
+    """
+    provide a list of local git branches with additional metadata
+
+    :param merged_with: was a branch merged into this one?
+    :return: list of dicts
+    """
     fmt = "%(refname:short);%(upstream:short);%(authordate:iso-strict);%(upstream:track)"
     for_each_ref = subprocess.check_output(
         ["git", "for-each-ref", "--format", fmt, "refs/heads/"]
     ).decode("utf-8").strip().split("\n")
     response = []
     was_merged = subprocess.check_output(
-        ["git", "branch", "--merged", "master", "--format", "%(refname:short)"]
+        ["git", "branch", "--merged", merged_with, "--format", "%(refname:short)"]
     ).decode("utf-8").strip().split("\n")
     for li in for_each_ref:
         fields = li.split(";")
@@ -165,3 +171,7 @@ def git_push():
     # it would make sense to do `git push -u`
     # this command NEEDS to be configurable
     subprocess.check_call(["git", "push", "-q"])
+
+
+def git_branch_d(branch_name: str):
+    return subprocess.check_call(["git", "branch", "--delete", branch_name])
