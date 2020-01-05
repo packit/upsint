@@ -87,7 +87,7 @@ def get_remote_url(remote):
         remote = "origin"
         logger.warning("falling back to %s", remote)
         url = subprocess.check_output(["git", "remote", "get-url", remote])
-    return remote, url.decode("utf-8").strip()
+    return url.decode("utf-8").strip()
 
 
 def prompt_for_pr_content(commit_msgs):
@@ -168,9 +168,8 @@ def get_commit_msgs(branch):
 
 def git_push():
     """ perform `git push` """
-    # it would make sense to do `git push -u`
-    # this command NEEDS to be configurable
-    subprocess.check_call(["git", "push", "-q"])
+    # FIXME: this command NEEDS to be configurable
+    subprocess.check_call(["git", "push", "-qu"])
 
 
 def git_branch_d(branch_name: str):
