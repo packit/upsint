@@ -15,8 +15,22 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import json
-import os
+import logging
+from pathlib import Path
+
+import yaml
+
+from upsint.exceptions import UpsintException
+
+
+logger = logging.getLogger(__name__)
+
+CONFIG_FILE_CANDIDATES = (
+    "~/.upsint.yaml",
+    "~/.upsint.yml",
+    "~/.upsint.json",
+    "~/.config/packit.yaml",
+)
 
 
 class Conf:
@@ -26,14 +40,17 @@ class Conf:
     @property
     def c(self):
         if self._c is None:
-            with open(os.path.expanduser("~/.upsint.json")) as fd:
-                self._c = json.load(fd)
+            for c in CONFIG_FILE_CANDIDATES:
+                try:
+                    content = Path(c).expanduser().read_text()
+                except FileNotFoundError:
+                    logger.debug(f"file {c} does not exist")
+                    continue
+                self._c = yaml.safe_load(content)
         return self._c
 
-    def get_github_configuration(self):
-        # TODO: implement proper validation
-        return self.c["github"]
-
-    def get_gitlab_configuration(self):
-        # TODO: implement proper validation
-        return self.c["gitlab"]
+    def get_auth_configuration(self):
+        auth_conf = self.c.get("authentication")
+        if not auth_conf:
+            raise UpsintException("No authentication defined in the config file.")
+        return auth_conf

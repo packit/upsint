@@ -14,15 +14,25 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+from typing import Optional, Iterable
+
+from ogr import get_instances_from_dict, get_project
+from ogr.abstract import GitProject, GitService
+
 from upsint.conf import Conf
-from upsint.services.github_service import GithubService
-from upsint.services.gitlab_service import GitlabService
 from upsint.utils import get_current_branch_name, get_remote_url, list_local_branches, git_branch_d
 
 
 class App:
     def __init__(self):
         self.conf = Conf()
+        self._git_services: Optional[Iterable[GitService]] = None
+
+    @property
+    def git_services(self):
+        if self._git_services is None:
+            self._git_services = get_instances_from_dict(self.conf.get_auth_configuration())
+        return self._git_services
 
     def get_service(self, service_name, repo=None):
         service_map = {
@@ -34,16 +44,11 @@ class App:
         configuration["full_repo_name"] = repo
         return _class(**configuration)
 
-    # TODO: change to remote=None and iterate over all remotes fallback to upstream and origin
-    def guess_service(self, remote="upstream"):
-        service_classes = [
-            GithubService
-        ]
-        remote, remote_url = get_remote_url(remote)
-        for k in service_classes:
-            i = k.create_from_remote_url(remote_url, **self.conf.c[k.name])
-            if i:
-                return i
+    def guess_remote_url(self, remote=None):
+        if remote is None:
+            return get_remote_url("upstream")
+        else:
+            return get_remote_url(remote)
 
     def get_current_branch(self):
         return get_current_branch_name()
@@ -67,3 +72,8 @@ class App:
         :param branch_name: guess what?
         """
         git_branch_d(branch_name)
+
+    def get_git_project(self, url: str) -> GitProject:
+        if not url:
+            url = self.guess_remote_url()
+        return get_project(url, custom_instances=self.git_services)

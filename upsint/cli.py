@@ -16,11 +16,14 @@
 #
 
 import logging
-
-from upsint.core import App
+import sys
 
 import click
 from tabulate import tabulate
+
+from upsint.core import App
+from upsint.utils import git_push, prompt_for_pr_content, get_commit_msgs, fetch_all, set_origin_remote, \
+    clone_repo_and_cd_inside, set_upstream_remote
 
 logger = logging.getLogger("upsint")
 
@@ -31,17 +34,35 @@ def upsint():
 
 
 @click.command(name="fork")
-@click.option('--service', "-s", type=click.STRING, default="github",
-              help="Name of the git service (e.g. github/gitlab)."
-                   "This is how you can select a repository for Github: <owner>/<project>.")
 @click.argument('repo', type=click.STRING)
-def fork(service, repo):
+def fork(repo):
     """
     Fork selected repository
     """
-    a = App()
-    s = a.get_service(service)
-    s.fork(repo)
+    app = App()
+
+    target_repo_org, target_repo_name = repo.split("/", 1)
+    # let's default to github if there is only 1 slash in repo
+
+    if "/" in target_repo_name:
+        git_project = app.get_git_project(repo)
+    else:
+        git_project = app.get_git_project(f"https://github.com/{repo}")
+    username = git_project.service.user.get_username()
+    forked_repo = git_project.fork_create()
+    # FIXME: haxxxxx
+    forked_repo.repo = target_repo_name
+    forked_repo.namespace = username
+
+    forked_repo_ssh_url = forked_repo.get_git_urls()["ssh"]
+
+    clone_repo_and_cd_inside(target_repo_name, forked_repo_ssh_url, target_repo_org)
+
+    set_upstream_remote(clone_url=git_project.get_git_urls()["git"],
+                        ssh_url=git_project.get_git_urls()["ssh"],
+                        pull_merge_name="pull")
+    set_origin_remote(forked_repo_ssh_url, pull_merge_name="pull")
+    fetch_all()
 
 
 @click.command(name="create-pr")
@@ -51,37 +72,46 @@ def create_pr(target_remote, target_branch):
     """
     Fork selected repository
     """
-    a = App()
-    s = a.guess_service(remote=target_remote)
-    pr_url = s.create_pull_request(target_remote, target_branch, a.get_current_branch())
-    print(pr_url)
+    app = App()
+
+    url = app.guess_remote_url()
+    git_project = app.get_git_project(url)
+
+    username = git_project.service.user.get_username()
+
+    base = "{}/{}".format(target_remote, target_branch)
+
+    git_push()
+
+    title, body = prompt_for_pr_content(get_commit_msgs(base))
+
+    pr = git_project.create_pr(title, body, target_branch, app.get_current_branch(), fork_username=username)
+
+    logger.info("PR link: %s", pr.url)
+    print(pr.url)
 
 
 @click.command(name="list-prs",
                help="List open pull requests in current git repository or the one you selected. "
                     "This is how you can select a repository for Github: <owner>/<project>.")
-@click.option('--service', "-s", type=click.STRING, default="github",
-              help="Name of the git service (e.g. github/gitlab).")
 @click.argument('repo', type=click.STRING, required=False)
-def list_prs(service, repo):
+def list_prs(repo):
     """
     List pull requests of a selected repository, default to repo in $PWD
     """
-    a = App()
-    if repo:
-        s = a.get_service(service, repo=repo)
-    else:
-        s = a.guess_service()
-    prs = s.list_pull_requests()
+    app = App()
+    url = repo or app.guess_remote_url()
+    git_project = app.get_git_project(url)
+    prs = git_project.get_pr_list()
     if not prs:
         print("No open pull requests.")
         return
     print(tabulate([
         (
-            "#%s" % pr['id'],
-            pr['title'],
-            "@%s" % pr['author'],
-            pr['url']
+            "#%s" % pr.id,
+            pr.title,
+            "@%s" % pr.author,
+            pr.url
         )
         for pr in prs
     ], tablefmt="fancy_grid"))
@@ -107,19 +137,19 @@ def list_branches(merged_with):
 @click.command(name="list-labels",
                help="List labels for the project. "
                     "This is how you can select a repository for Github: <owner>/<project>.")
-@click.option('--service', "-s", type=click.STRING, default="github",
-              help="Name of the git service (e.g. github/gitlab).")
 @click.argument('repo', type=click.STRING, required=False)
-def list_labels(service, repo):
+def list_labels(repo):
     """
     List the labels for the selected repository, default to repo in $PWD
     """
     app = App()
-    if repo:
-        serv = app.get_service(service, repo=repo)
-    else:
-        serv = app.guess_service()
-    repo_labels = serv.list_labels()
+    url = repo or app.guess_remote_url()
+    git_project = app.get_git_project(url)
+    try:
+        repo_labels = git_project.get_labels()
+    except AttributeError:
+        click.echo(f"We don't support repository-wide labels for type {git_project.__class__.__name__}.", err=True)
+        sys.exit(2)
     if not repo_labels:
         print("No labels.")
         return
@@ -136,26 +166,22 @@ def list_labels(service, repo):
 @click.command(name="list-tags",
                help="List tags for the project. "
                     "This is how you can select a repository for Github: <owner>/<project>.")
-@click.option('--service', "-s", type=click.STRING, default="github",
-              help="Name of the git service (e.g. github/gitlab).")
 @click.argument('repo', type=click.STRING, required=False)
-def list_tags(service, repo):
+def list_tags(repo):
     """
     List the tags for the selected repository, default to repo in $PWD
     """
     app = App()
-    if repo:
-        serv = app.get_service(service, repo=repo)
-    else:
-        serv = app.guess_service()
-    repo_tags = serv.list_tags()
+    url = repo or app.guess_remote_url()
+    git_project = app.get_git_project(url)
+    repo_tags = git_project.get_tags()
     if not repo_tags:
         print("No tags.")
         return
     print(tabulate([
         (
-            tag['name'],
-            tag['url']
+            tag.name,
+            tag.commit_sha
         )
         for tag in repo_tags
     ], tablefmt="fancy_grid"))
@@ -176,11 +202,13 @@ def update_labels(source_repo, service, source_service, destination):
     Update labels for the selected repository, default to repo in $PWD
     """
     app = App()
-    if source_repo:
-        serv = app.get_service(source_service, repo=source_repo)
-    else:
-        serv = app.guess_service()
-    repo_labels = serv.list_labels()
+    url = app.guess_remote_url()
+    git_project = app.get_git_project(url)
+    try:
+        repo_labels = git_project.get_labels()
+    except AttributeError:
+        click.echo(f"Project {git_project.__class__.__name__} does not support repository-wide labels.", err=True)
+        sys.exit(2)
     if not repo_labels:
         print("No labels.")
         return
