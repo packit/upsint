@@ -16,6 +16,7 @@
 #
 
 import logging
+import subprocess
 import sys
 
 import click
@@ -290,6 +291,29 @@ def remove_merged_branches(merged_with_branch):
         print("Doing nothing, stay safe my friend.")
 
 
+@click.command(name="checkout-pr")
+@click.option(
+    "--remote",
+    type=click.STRING,
+    default="upstream",
+    help="Check out a pull request from this remote",
+)
+@click.argument("pr", type=click.INT)
+def checkout_pr(remote, pr):
+    """
+    `git checkout` a pull request locally
+    """
+    local_refspec = f"{remote}/pr/{pr}"
+
+    # we only need to fetch the ref for the PR
+    subprocess.check_call(
+        ["git", "fetch", remote, f"+refs/pull/{pr}/head:refs/remotes/{local_refspec}"]
+    )
+
+    # doing -B in case it exists already
+    subprocess.check_call(["git", "checkout", "-B", f"pr/{pr}", local_refspec])
+
+
 upsint.add_command(fork)
 upsint.add_command(create_pr)
 upsint.add_command(list_prs)
@@ -298,6 +322,7 @@ upsint.add_command(list_tags)
 upsint.add_command(list_labels)
 upsint.add_command(update_labels)
 upsint.add_command(remove_merged_branches)
+upsint.add_command(checkout_pr)
 
 
 if __name__ == "__main__":
