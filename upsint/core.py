@@ -20,7 +20,12 @@ from ogr import get_instances_from_dict, get_project
 from ogr.abstract import GitProject, GitService
 
 from upsint.conf import Conf
-from upsint.utils import get_current_branch_name, get_remote_url, list_local_branches, git_branch_d
+from upsint.utils import (
+    get_current_branch_name,
+    get_remote_url,
+    list_local_branches,
+    git_branch_d,
+)
 
 
 class App:
@@ -31,18 +36,10 @@ class App:
     @property
     def git_services(self):
         if self._git_services is None:
-            self._git_services = get_instances_from_dict(self.conf.get_auth_configuration())
+            self._git_services = get_instances_from_dict(
+                self.conf.get_auth_configuration()
+            )
         return self._git_services
-
-    def get_service(self, service_name, repo=None):
-        service_map = {
-            GithubService.name: GithubService,
-            GitlabService.name: GitlabService
-        }
-        _class = service_map[service_name]
-        configuration = self.conf.c[service_name]
-        configuration["full_repo_name"] = repo
-        return _class(**configuration)
 
     def guess_remote_url(self, remote=None):
         if remote is None:
@@ -63,7 +60,9 @@ class App:
             "remote_tracking": "origin",  # can be None
         }
         """
-        return sorted(list_local_branches(merged_with), key=lambda x: x["date"], reverse=True)
+        return sorted(
+            list_local_branches(merged_with), key=lambda x: x["date"], reverse=True
+        )
 
     def remove_branch(self, branch_name: str):
         """

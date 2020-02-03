@@ -6,9 +6,15 @@ import time
 import github
 
 from upsint.service import Service
-from upsint.utils import (clone_repo_and_cd_inside, fetch_all, get_commit_msgs,
-                        prompt_for_pr_content, set_origin_remote,
-                        set_upstream_remote, git_push)
+from upsint.utils import (
+    clone_repo_and_cd_inside,
+    fetch_all,
+    get_commit_msgs,
+    prompt_for_pr_content,
+    set_origin_remote,
+    set_upstream_remote,
+    git_push,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -43,8 +49,11 @@ class GithubService(Service):
     @staticmethod
     def is_fork_of(user_repo, target_repo):
         """ is provided repo fork of gh.com/{parent_repo}/? """
-        return user_repo.fork and user_repo.parent and \
-            user_repo.parent.full_name == target_repo
+        return (
+            user_repo.fork
+            and user_repo.parent
+            and user_repo.parent.full_name == target_repo
+        )
 
     def fork(self, target_repo):
 
@@ -56,7 +65,9 @@ class GithubService(Service):
             # is it already forked?
             user_repo = self.user.get_repo(target_repo_name)
             if not self.is_fork_of(user_repo, target_repo):
-                raise RuntimeError("repo %s is not a fork of %s" % (user_repo, target_repo_gh))
+                raise RuntimeError(
+                    "repo %s is not a fork of %s" % (user_repo, target_repo_gh)
+                )
         except github.UnknownObjectException:
             # nope
             user_repo = None
@@ -71,9 +82,11 @@ class GithubService(Service):
 
             clone_repo_and_cd_inside(user_repo.name, user_repo.ssh_url, target_repo_org)
 
-            set_upstream_remote(clone_url=target_repo_gh.clone_url,
-                                ssh_url=target_repo_gh.ssh_url,
-                                pull_merge_name="pull")
+            set_upstream_remote(
+                clone_url=target_repo_gh.clone_url,
+                ssh_url=target_repo_gh.ssh_url,
+                pull_merge_name="pull",
+            )
         set_origin_remote(user_repo.ssh_url, pull_merge_name="pull")
         fetch_all()
 
@@ -125,17 +138,16 @@ class GithubService(Service):
 
         :return: [PullRequest]
         """
-        prs = self.repo.get_pulls(state="open",
-                                  sort="updated",
-                                  direction="desc")
+        prs = self.repo.get_pulls(state="open", sort="updated", direction="desc")
         return [
             {
-                'id': pr.number,
-                'title': pr.title,
-                'author': pr.user.login,
-                'url': pr.html_url,
+                "id": pr.number,
+                "title": pr.title,
+                "author": pr.user.login,
+                "url": pr.html_url,
             }
-            for pr in prs]
+            for pr in prs
+        ]
 
     def list_labels(self):
         """
@@ -156,9 +168,9 @@ class GithubService(Service):
         for label in labels:
             if label.name not in current_label_names:
                 color = self._normalize_label_color(color=label.color)
-                self.repo.create_label(name=label.name,
-                                       color=color,
-                                       description=label.description or "")
+                self.repo.create_label(
+                    name=label.name, color=color, description=label.description or ""
+                )
 
                 changes += 1
         return changes
@@ -170,13 +182,17 @@ class GithubService(Service):
         """
         tags = []
         for tag in self.repo.get_tags():
-            tags.append({'name': tag.name,
-                         'url': f"https://github.com/{self.repo.full_name}"
-                                f"/releases/tag/{tag.name}"})
+            tags.append(
+                {
+                    "name": tag.name,
+                    "url": f"https://github.com/{self.repo.full_name}"
+                    f"/releases/tag/{tag.name}",
+                }
+            )
         return tags
 
     @staticmethod
     def _normalize_label_color(color):
-        if color.startswith('#'):
+        if color.startswith("#"):
             return color[1:]
         return color

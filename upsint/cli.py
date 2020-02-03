@@ -22,8 +22,15 @@ import click
 from tabulate import tabulate
 
 from upsint.core import App
-from upsint.utils import git_push, prompt_for_pr_content, get_commit_msgs, fetch_all, set_origin_remote, \
-    clone_repo_and_cd_inside, set_upstream_remote
+from upsint.utils import (
+    git_push,
+    prompt_for_pr_content,
+    get_commit_msgs,
+    fetch_all,
+    set_origin_remote,
+    clone_repo_and_cd_inside,
+    set_upstream_remote,
+)
 
 logger = logging.getLogger("upsint")
 
@@ -34,7 +41,7 @@ def upsint():
 
 
 @click.command(name="fork")
-@click.argument('repo', type=click.STRING)
+@click.argument("repo", type=click.STRING)
 def fork(repo):
     """
     Fork selected repository
@@ -58,16 +65,18 @@ def fork(repo):
 
     clone_repo_and_cd_inside(target_repo_name, forked_repo_ssh_url, target_repo_org)
 
-    set_upstream_remote(clone_url=git_project.get_git_urls()["git"],
-                        ssh_url=git_project.get_git_urls()["ssh"],
-                        pull_merge_name="pull")
+    set_upstream_remote(
+        clone_url=git_project.get_git_urls()["git"],
+        ssh_url=git_project.get_git_urls()["ssh"],
+        pull_merge_name="pull",
+    )
     set_origin_remote(forked_repo_ssh_url, pull_merge_name="pull")
     fetch_all()
 
 
 @click.command(name="create-pr")
-@click.argument('target_remote', type=click.STRING, required=False, default="upstream")
-@click.argument('target_branch', type=click.STRING, required=False, default="master")
+@click.argument("target_remote", type=click.STRING, required=False, default="upstream")
+@click.argument("target_branch", type=click.STRING, required=False, default="master")
 def create_pr(target_remote, target_branch):
     """
     Fork selected repository
@@ -85,16 +94,20 @@ def create_pr(target_remote, target_branch):
 
     title, body = prompt_for_pr_content(get_commit_msgs(base))
 
-    pr = git_project.create_pr(title, body, target_branch, app.get_current_branch(), fork_username=username)
+    pr = git_project.create_pr(
+        title, body, target_branch, app.get_current_branch(), fork_username=username
+    )
 
     logger.info("PR link: %s", pr.url)
     print(pr.url)
 
 
-@click.command(name="list-prs",
-               help="List open pull requests in current git repository or the one you selected. "
-                    "This is how you can select a repository for Github: <owner>/<project>.")
-@click.argument('repo', type=click.STRING, required=False)
+@click.command(
+    name="list-prs",
+    help="List open pull requests in current git repository or the one you selected. "
+    "This is how you can select a repository for Github: <owner>/<project>.",
+)
+@click.argument("repo", type=click.STRING, required=False)
 def list_prs(repo):
     """
     List pull requests of a selected repository, default to repo in $PWD
@@ -106,25 +119,25 @@ def list_prs(repo):
     if not prs:
         print("No open pull requests.")
         return
-    print(tabulate([
-        (
-            "#%s" % pr.id,
-            pr.title,
-            "@%s" % pr.author,
-            pr.url
+    print(
+        tabulate(
+            [("#%s" % pr.id, pr.title, "@%s" % pr.author, pr.url) for pr in prs],
+            tablefmt="fancy_grid",
         )
-        for pr in prs
-    ], tablefmt="fancy_grid"))
+    )
 
 
-@click.command(name="list-branches",
-               help="List branches in the local repository. Fields in the table: branch name, "
-                    "remote tracking branch, date, divergence status and "
-                    "whether the branch was merged to master."
-               )
+@click.command(
+    name="list-branches",
+    help="List branches in the local repository. Fields in the table: branch name, "
+    "remote tracking branch, date, divergence status and "
+    "whether the branch was merged to master.",
+)
 @click.option(
-    '--merged-with', type=click.STRING, default="master",
-    help="Was a branch merged with this one?"
+    "--merged-with",
+    type=click.STRING,
+    default="master",
+    help="Was a branch merged with this one?",
 )
 def list_branches(merged_with):
     """
@@ -134,10 +147,12 @@ def list_branches(merged_with):
     print(tabulate(a.list_branches(merged_with=merged_with), tablefmt="fancy_grid"))
 
 
-@click.command(name="list-labels",
-               help="List labels for the project. "
-                    "This is how you can select a repository for Github: <owner>/<project>.")
-@click.argument('repo', type=click.STRING, required=False)
+@click.command(
+    name="list-labels",
+    help="List labels for the project. "
+    "This is how you can select a repository for Github: <owner>/<project>.",
+)
+@click.argument("repo", type=click.STRING, required=False)
 def list_labels(repo):
     """
     List the labels for the selected repository, default to repo in $PWD
@@ -148,25 +163,28 @@ def list_labels(repo):
     try:
         repo_labels = git_project.get_labels()
     except AttributeError:
-        click.echo(f"We don't support repository-wide labels for type {git_project.__class__.__name__}.", err=True)
+        click.echo(
+            f"We don't support repository-wide labels for type {git_project.__class__.__name__}.",
+            err=True,
+        )
         sys.exit(2)
     if not repo_labels:
         print("No labels.")
         return
-    print(tabulate([
-        (
-            label.name,
-            label.color,
-            label.description
+    print(
+        tabulate(
+            [(label.name, label.color, label.description) for label in repo_labels],
+            tablefmt="fancy_grid",
         )
-        for label in repo_labels
-    ], tablefmt="fancy_grid"))
+    )
 
 
-@click.command(name="list-tags",
-               help="List tags for the project. "
-                    "This is how you can select a repository for Github: <owner>/<project>.")
-@click.argument('repo', type=click.STRING, required=False)
+@click.command(
+    name="list-tags",
+    help="List tags for the project. "
+    "This is how you can select a repository for Github: <owner>/<project>.",
+)
+@click.argument("repo", type=click.STRING, required=False)
 def list_tags(repo):
     """
     List the tags for the selected repository, default to repo in $PWD
@@ -178,25 +196,34 @@ def list_tags(repo):
     if not repo_tags:
         print("No tags.")
         return
-    print(tabulate([
-        (
-            tag.name,
-            tag.commit_sha
+    print(
+        tabulate(
+            [(tag.name, tag.commit_sha) for tag in repo_tags], tablefmt="fancy_grid"
         )
-        for tag in repo_tags
-    ], tablefmt="fancy_grid"))
+    )
 
 
-@click.command(name="update-labels",
-               help="Update labels of other project. "
-                    "Multiple destinations can be set by joining them with semicolon. "
-                    "This is how you can select a repository for Github: <owner>/<project>.")
-@click.option('--source-repo', '-r', type=click.STRING)
-@click.option('--source-service', type=click.STRING, default="github",
-              help="Name of the git service (e.g. github/gitlab).")
-@click.option('--service', "-s", type=click.STRING, default="github",
-              help="Name of the git service for destination (e.g. github/gitlab).")
-@click.argument('destination', type=click.STRING, nargs=-1)
+@click.command(
+    name="update-labels",
+    help="Update labels of other project. "
+    "Multiple destinations can be set by joining them with semicolon. "
+    "This is how you can select a repository for Github: <owner>/<project>.",
+)
+@click.option("--source-repo", "-r", type=click.STRING)
+@click.option(
+    "--source-service",
+    type=click.STRING,
+    default="github",
+    help="Name of the git service (e.g. github/gitlab).",
+)
+@click.option(
+    "--service",
+    "-s",
+    type=click.STRING,
+    default="github",
+    help="Name of the git service for destination (e.g. github/gitlab).",
+)
+@click.argument("destination", type=click.STRING, nargs=-1)
 def update_labels(source_repo, service, source_service, destination):
     """
     Update labels for the selected repository, default to repo in $PWD
@@ -207,7 +234,10 @@ def update_labels(source_repo, service, source_service, destination):
     try:
         repo_labels = git_project.get_labels()
     except AttributeError:
-        click.echo(f"Project {git_project.__class__.__name__} does not support repository-wide labels.", err=True)
+        click.echo(
+            f"Project {git_project.__class__.__name__} does not support repository-wide labels.",
+            err=True,
+        )
         sys.exit(2)
     if not repo_labels:
         print("No labels.")
@@ -217,15 +247,15 @@ def update_labels(source_repo, service, source_service, destination):
         other_serv = app.get_service(service, repo=repo_for_copy)
         changes = other_serv.update_labels(labels=repo_labels)
 
-        click.echo("{changes} labels of {labels_count} copied to {repo_name}".format(
-            changes=changes,
-            labels_count=len(repo_labels),
-            repo_name=repo_for_copy
-        ))
+        click.echo(
+            "{changes} labels of {labels_count} copied to {repo_name}".format(
+                changes=changes, labels_count=len(repo_labels), repo_name=repo_for_copy
+            )
+        )
 
 
 @click.command(name="remove-merged-branches")
-@click.argument('merged_with_branch', type=click.STRING, default="master")
+@click.argument("merged_with_branch", type=click.STRING, default="master")
 def remove_merged_branches(merged_with_branch):
     """
     Remove branches which are already merged (in master by default)
@@ -237,7 +267,10 @@ def remove_merged_branches(merged_with_branch):
     to_remove = []
     for branch_dict in a.list_branches(merged_with_branch):
         branch_name = branch_dict["name"]
-        if branch_name == merged_with_branch or branch_name == branch_dict["remote_tracking"]:
+        if (
+            branch_name == merged_with_branch
+            or branch_name == branch_dict["remote_tracking"]
+        ):
             # don't remove self or a local copy of remote branch
             continue
         if branch_dict["merged"] == "merged":
@@ -267,5 +300,5 @@ upsint.add_command(update_labels)
 upsint.add_command(remove_merged_branches)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     upsint()
