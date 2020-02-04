@@ -7,4 +7,3 @@ check-pylint:
 
 check-bandit:
 	bandit . -r || true
-
