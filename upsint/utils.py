@@ -19,8 +19,9 @@ import os
 import subprocess
 import tempfile
 import datetime
+from dataclasses import dataclass
 from time import sleep
-from typing import Iterable, Dict
+from typing import Iterable, Dict, List
 
 from upsint.constant import CLONE_TIMEOUT
 
@@ -212,3 +213,60 @@ def git_push():
 
 def git_branch_d(branch_name: str):
     return subprocess.check_call(["git", "branch", "--delete", branch_name])
+
+
+def get_commits_in_range(lower_bound: str, upper_bound: str = "HEAD") -> List[str]:
+    """
+    get commits in a range of commits
+
+    :param lower_bound: commits starting here
+    :param upper_bound: and ending here
+    :return: list of commit hashes
+    """
+    # "--" - to separate reviions from paths
+    cmd = [
+        "git",
+        "log",
+        "--pretty=format:%H",
+        "--first-parent",
+        f"{lower_bound}..{upper_bound}",
+        "--",
+    ]
+    out: str = subprocess.check_output(cmd).decode()
+    commit_list: List[str] = out.strip().split("\n")
+    return commit_list
+
+
+def get_commits_in_a_merge(commit_hash: str) -> List[str]:
+    """
+    get commits included in a merge
+
+    :param commit_hash: a pony
+    :return: list of commit hashes
+    """
+    # "--" - to separate reviions from paths
+    cmd = ["git", "log", "--pretty=format:%H", f"{commit_hash}^..{commit_hash}", "--"]
+    out: str = subprocess.check_output(cmd).decode()
+    commit_list: List[str] = out.strip().split("\n")
+    # the first one is the merge commit, we don't care about that
+    return commit_list[1:]
+
+
+@dataclass
+class CommitMetadata:
+    message: str
+    body: str
+
+
+def get_commit_metadata(commit_hash: str) -> CommitMetadata:
+    commit_subject = (
+        subprocess.check_output(["git", "show", "--quiet", "--format=%s", commit_hash])
+        .decode()
+        .strip()
+    )
+    commit_body = (
+        subprocess.check_output(["git", "show", "--quiet", "--format=%b", commit_hash])
+        .decode()
+        .strip()
+    )
+    return CommitMetadata(message=commit_subject, body=commit_body)

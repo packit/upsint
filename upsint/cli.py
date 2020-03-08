@@ -18,6 +18,7 @@
 import logging
 import subprocess
 import sys
+import re
 
 import click
 from tabulate import tabulate
@@ -31,6 +32,9 @@ from upsint.utils import (
     set_origin_remote,
     clone_repo_and_cd_inside,
     set_upstream_remote,
+    get_commits_in_range,
+    get_commit_metadata,
+    get_commits_in_a_merge,
 )
 
 logger = logging.getLogger("upsint")
@@ -314,6 +318,43 @@ def checkout_pr(remote, pr):
     subprocess.check_call(["git", "checkout", "-B", f"pr/{pr}", local_refspec])
 
 
+@click.command(name="get-changes")
+@click.argument("lower-bound", type=click.STRING)
+@click.argument("upper-bound", type=click.STRING, default="HEAD")
+def get_changes(lower_bound, upper_bound):
+    """
+    Get changelog-like changes in a commit range
+    """
+    app = App()
+    url = app.guess_remote_url()
+    git_project = app.get_git_project(url)
+    commits = get_commits_in_range(lower_bound=lower_bound, upper_bound=upper_bound)
+    for com in commits:
+        # we could get all the commit messages in a single git call,
+        # but parsing that would be pretty hard and prone to errors
+        commit_metadata = get_commit_metadata(com)
+        reg = r"Merge pull request #(\d+) from (\w+)/\w+"
+        match = re.match(reg, commit_metadata.message)
+        if match:
+            pr_id = match.group(1)
+            author = match.group(2)
+
+            pr = git_project.get_pr(int(pr_id))
+
+            print(
+                f"* {commit_metadata.body}, by [@{author}](https://github.com/{author}), "
+                f"[#{pr_id}](https://github.com/{git_project.namespace}"
+                f"/{git_project.repo}/pulls/{pr_id})"
+            )
+            print(f"  * description: {pr.description!r}")
+            for m_commit in get_commits_in_a_merge(com):
+                m = get_commit_metadata(m_commit)
+                print(f"  * commit: {m.message}")
+
+        else:
+            print(f"* {commit_metadata.message}")
+
+
 upsint.add_command(fork)
 upsint.add_command(create_pr)
 upsint.add_command(list_prs)
@@ -323,6 +364,7 @@ upsint.add_command(list_labels)
 upsint.add_command(update_labels)
 upsint.add_command(remove_merged_branches)
 upsint.add_command(checkout_pr)
+upsint.add_command(get_changes)
 
 
 if __name__ == "__main__":
