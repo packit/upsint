@@ -18,7 +18,11 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Union
 
-from upsint.utils import get_commits_in_range, get_commits_in_a_merge
+from upsint.utils import (
+    get_commits_in_range,
+    get_commits_in_a_merge,
+    get_commit_metadata,
+)
 
 GIT_TAG = "0.1.0"
 
@@ -50,8 +54,16 @@ def initiate_git_repo(directory: str,):
     )
 
     subprocess.check_call(["git", "checkout", "master"], cwd=directory)
+    merge_message = (
+        "Merge pull request #760 from jpopelka/specfile-add_patches\n"
+        "\n"
+        "More Specfile.add_patches() changes\n"
+        "\n"
+        "Reviewed-by: Tomas Tomecek <tomas@tomecek.net>\n"
+        "             https://github.com/TomasTomecek\n"
+    )
     subprocess.check_call(
-        ["git", "merge", "--no-ff", "-m", "merge time!", "branch"], cwd=directory
+        ["git", "merge", "--no-ff", "-m", merge_message, "branch"], cwd=directory
     )
 
 
@@ -103,3 +115,14 @@ def test_get_commits_in_merge(tmpdir):
         assert merge_commit_hash not in commits
         assert in_merge_commit in commits
         assert len(commits) == 2
+
+
+def test_get_commit_metadata(tmpdir):
+    with cwd(str(tmpdir)):
+        initiate_git_repo(str(tmpdir))
+        metadata = get_commit_metadata("HEAD")
+        assert metadata.body == "More Specfile.add_patches() changes"
+        assert (
+            metadata.message
+            == "Merge pull request #760 from jpopelka/specfile-add_patches"
+        )
