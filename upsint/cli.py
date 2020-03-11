@@ -329,12 +329,13 @@ def get_changes(lower_bound, upper_bound):
     url = app.guess_remote_url()
     git_project = app.get_git_project(url)
     commits = get_commits_in_range(lower_bound=lower_bound, upper_bound=upper_bound)
+    reg = re.compile(r"Merge pull request #(\d+) from (\w+)/\w+")
+
     for com in commits:
         # we could get all the commit messages in a single git call,
         # but parsing that would be pretty hard and prone to errors
         commit_metadata = get_commit_metadata(com)
-        reg = r"Merge pull request #(\d+) from (\w+)/\w+"
-        match = re.match(reg, commit_metadata.message)
+        match = reg.match(commit_metadata.message)
         if match:
             pr_id = match.group(1)
             author = match.group(2)

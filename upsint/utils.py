@@ -16,6 +16,7 @@
 #
 import logging
 import os
+import re
 import subprocess
 import tempfile
 import datetime
@@ -264,9 +265,9 @@ def get_commit_metadata(commit_hash: str) -> CommitMetadata:
         .decode()
         .strip()
     )
-    commit_body = (
-        subprocess.check_output(["git", "show", "--quiet", "--format=%b", commit_hash])
-        .decode()
-        .strip()
-    )
+    commit_body = subprocess.check_output(
+        ["git", "show", "--quiet", "--format=%b", commit_hash]
+    ).decode()
+    reg = r"Reviewed\-by:.+"
+    commit_body = re.sub(reg, "", commit_body, flags=re.DOTALL).strip()
     return CommitMetadata(message=commit_subject, body=commit_body)
