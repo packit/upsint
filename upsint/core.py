@@ -14,10 +14,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+import re
 from typing import Optional, Iterable
 
 from ogr import get_instances_from_dict, get_project
-from ogr.abstract import GitProject, GitService
+from ogr.abstract import GitProject, GitService, PullRequest
 
 from upsint.conf import Conf
 from upsint.utils import (
@@ -76,3 +77,24 @@ class App:
         if not url:
             url = self.guess_remote_url()
         return get_project(url, custom_instances=self.git_services)
+
+    def get_current_branch_pr(self, git_project: GitProject) -> PullRequest:
+        """
+        If the current branch is assoctiated with a PR, get it, otherwise return None
+        """
+        current_branch = self.get_current_branch()
+
+        pr_re = re.compile(r"^pr/(\d+)$")
+        m = pr_re.match(current_branch)
+        if m:
+            pr_id = int(m.group(1))
+            pr = git_project.get_pr(pr_id)
+            return pr
+
+        # FIXME: could this logic be in ogr? input: branch + repo, output: pr
+        for pr in git_project.get_pr_list():
+            if (
+                pr.source_branch == current_branch
+                and pr.author == git_project.service.user.get_username()
+            ):
+                return pr

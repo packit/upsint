@@ -16,11 +16,12 @@
 #
 
 import logging
+import re
 import subprocess
 import sys
-import re
 
 import click
+from ogr.abstract import CommitStatus
 from tabulate import tabulate
 
 from upsint.core import App
@@ -356,6 +357,78 @@ def get_changes(lower_bound, upper_bound):
             print(f"* {commit_metadata.message}")
 
 
+@click.command(name="status")
+@click.option(
+    "--with-pr-comments",
+    type=click.BOOL,
+    default=False,
+    help="If on a PR branch, show all the comments",
+)
+def status(with_pr_comments):
+    """
+    Get information about project. If not on master,
+    figure out if the branch is associated with a PR and get status of that PR.
+    """
+    app = App()
+    url = app.guess_remote_url()
+    git_project = app.get_git_project(url)
+
+    pr = app.get_current_branch_pr(git_project)
+    if pr:
+        click.echo(f"#{pr.id} ", nl=False)
+        click.echo(click.style(pr.title, fg="white"), nl=False)
+        click.echo(", by @", nl=False)
+        click.echo(click.style(pr.author, bold=True))
+        if len(pr.description) > 255:
+            click.echo(click.style(f"{pr.description[:255]}...", fg="yellow"))
+        else:
+            click.echo(click.style(pr.description, fg="yellow"))
+        top_commit = pr.get_all_commits()[-1]
+
+        commit_statuses = git_project.get_commit_statuses(top_commit)
+        # github returns all statuses, not just the latest:
+        # so let's just display the latest ones
+        processed = set()
+        for cs in commit_statuses:
+            if cs.context in processed:
+                continue
+            if cs.state in (CommitStatus.pending, CommitStatus.running):
+                color, symbol = "yellow", "🚀"
+            elif cs.state in (CommitStatus.failure, CommitStatus.error):
+                color, symbol = "red", "🞭"
+            elif cs.state == CommitStatus.success:
+                color, symbol = "green", "✓"
+            elif cs.state == CommitStatus.canceled:
+                color, symbol = "orange", "🗑"
+            else:
+                logger.warning(
+                    f"I don't know this type of commit status: {cs.state.value}, {cs.comment}"
+                )
+                continue
+            processed.add(cs.context)
+            click.echo(
+                click.style(f"{symbol} {cs.context} - {cs.comment} {cs.url}", fg=color)
+            )
+        if with_pr_comments:
+            pr_comments = pr.get_comments()
+            if pr_comments:
+                click.echo()
+                for comment in pr_comments:
+                    click.echo(
+                        click.style(f"{comment.author} ({comment.created})", bold=True)
+                    )
+                    click.echo(click.style(comment.body))
+                    click.echo(click.style(40 * "-"))
+    else:
+        open_issues = git_project.get_issue_list()
+        click.echo(f"Open issues: {len(open_issues)}")
+        open_prs = git_project.get_pr_list()
+        click.echo(f"Open PRs: {len(open_prs)}")
+        latest_release = git_project.get_latest_release()
+        click.echo(f"Latest release: {latest_release.title}")
+        # TODO: printing latest commit would be nice
+
+
 upsint.add_command(fork)
 upsint.add_command(create_pr)
 upsint.add_command(list_prs)
@@ -366,6 +439,7 @@ upsint.add_command(update_labels)
 upsint.add_command(remove_merged_branches)
 upsint.add_command(checkout_pr)
 upsint.add_command(get_changes)
+upsint.add_command(status)
 
 
 if __name__ == "__main__":
