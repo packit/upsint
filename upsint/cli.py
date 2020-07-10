@@ -346,7 +346,7 @@ def get_changes(lower_bound, upper_bound):
             print(
                 f"* {commit_metadata.body}, by [@{author}](https://github.com/{author}), "
                 f"[#{pr_id}](https://github.com/{git_project.namespace}"
-                f"/{git_project.repo}/pulls/{pr_id})"
+                f"/{git_project.repo}/pull/{pr_id})"
             )
             print(f"  * description: {pr.description!r}")
             for m_commit in get_commits_in_a_merge(com):
