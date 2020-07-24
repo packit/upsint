@@ -163,7 +163,7 @@ class GithubService(Service):
         :param labels: [str]
         :return: int - number of added labels
         """
-        current_label_names = [l.name for l in list(self.repo.get_labels())]
+        current_label_names = {label.name for label in self.list_labels()}
         changes = 0
         for label in labels:
             if label.name not in current_label_names:

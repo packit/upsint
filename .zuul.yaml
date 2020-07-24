@@ -1,0 +1,9 @@
+---
+- project:
+    name: packit-service/upsint
+    check:
+      jobs:
+        - pre-commit
+    gate:
+      jobs:
+        - pre-commit
