@@ -1,6 +1,5 @@
 ---
 - project:
-    name: packit-service/upsint
     check:
       jobs:
         - pre-commit
