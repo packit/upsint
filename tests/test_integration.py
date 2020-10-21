@@ -27,7 +27,9 @@ from upsint.utils import (
 GIT_TAG = "0.1.0"
 
 
-def initiate_git_repo(directory: str,):
+def initiate_git_repo(
+    directory: str,
+):
     """
     Initiate a git repo for testing.
 
