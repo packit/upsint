@@ -82,10 +82,13 @@ def fork(repo):
 
 @click.command(name="create-pr")
 @click.argument("target_remote", type=click.STRING, required=False, default="upstream")
-@click.argument("target_branch", type=click.STRING, required=False, default="master")
+@click.argument("target_branch", type=click.STRING, required=False, default=None)
 def create_pr(target_remote, target_branch):
     """
-    Fork selected repository
+    Create a pull or a merge request against upstream remote.
+
+    The default projects's branch is used implicitly
+    (which everyone can configure in their project settings).
     """
     app = App()
 
@@ -93,6 +96,10 @@ def create_pr(target_remote, target_branch):
     git_project = app.get_git_project(url)
 
     username = git_project.service.user.get_username()
+
+    if not target_branch:
+        target_branch = git_project.default_branch
+        logger.info(f"Branch not specified, using {target_branch}.")
 
     base = "{}/{}".format(target_remote, target_branch)
 
@@ -137,20 +144,31 @@ def list_prs(repo):
     name="list-branches",
     help="List branches in the local repository. Fields in the table: branch name, "
     "remote tracking branch, date, divergence status and "
-    "whether the branch was merged to master.",
+    "whether the branch was merged to the main branch.",
 )
 @click.option(
     "--merged-with",
     type=click.STRING,
-    default="master",
+    default=None,
     help="Was a branch merged with this one?",
 )
-def list_branches(merged_with):
+@click.option(
+    "--remote",
+    type=click.STRING,
+    default="upstream",
+    help="List branches of this project specified as git-remote name",
+)
+def list_branches(merged_with, remote):
     """
     List git branches in current git repository
     """
     a = App()
-    print(tabulate(a.list_branches(merged_with=merged_with), tablefmt="fancy_grid"))
+    print(
+        tabulate(
+            a.list_branches(merged_with=merged_with, remote=remote),
+            tablefmt="fancy_grid",
+        )
+    )
 
 
 @click.command(
