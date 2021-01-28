@@ -51,7 +51,7 @@ class App:
     def get_current_branch(self):
         return get_current_branch_name()
 
-    def list_branches(self, merged_with: str = "master"):
+    def list_branches(self, remote: str, merged_with: Optional[str] = None):
         """
         provide a list of branches with additional metadata
 
@@ -61,6 +61,10 @@ class App:
             "remote_tracking": "origin",  # can be None
         }
         """
+        if not merged_with:
+            url = self.guess_remote_url(remote=remote)
+            git_project = self.get_git_project(url)
+            merged_with = git_project.default_branch
         return sorted(
             list_local_branches(merged_with), key=lambda x: x["date"], reverse=True
         )

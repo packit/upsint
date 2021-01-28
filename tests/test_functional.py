@@ -19,9 +19,11 @@ from pathlib import Path
 from upsint.utils import clone_repo_and_cd_inside, set_upstream_remote
 
 
-def call_upsint(parameters, envs=None, cwd=None):
+def call_upsint(parameters, envs=None, cwd=None, return_output=False):
     """ invoke packit in a subprocess """
     cmd = ["python3", "-m", "upsint.cli"] + parameters
+    if return_output:
+        return subprocess.check_output(cmd, env=envs, cwd=cwd).decode()
     return subprocess.check_call(cmd, env=envs, cwd=cwd)
 
 
@@ -55,3 +57,15 @@ def test_checkout_pr(tmpdir):
         == b"pr/1\n"
     )
     assert subprocess.check_output(["git", "rev-parse", "HEAD"]) == commit
+
+
+def test_list_branches(tmp_path):
+    os.chdir(tmp_path)
+    repo_name = "research"
+    namespace = "packit-service"
+    repo_clone_url = f"https://github.com/{namespace}/{repo_name}"
+    clone_repo_and_cd_inside(repo_name, repo_clone_url, namespace)
+
+    out = call_upsint(["list-branches"], return_output=True)
+    assert "╒═" in out
+    assert "│ main" in out
