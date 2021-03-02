@@ -443,7 +443,8 @@ def status(with_pr_comments):
         open_prs = git_project.get_pr_list()
         click.echo(f"Open PRs: {len(open_prs)}")
         latest_release = git_project.get_latest_release()
-        click.echo(f"Latest release: {latest_release.title}")
+        if latest_release:
+            click.echo(f"Latest release: {latest_release.title}")
         # TODO: printing latest commit would be nice
 
 
