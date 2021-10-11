@@ -36,6 +36,7 @@ from upsint.utils import (
     get_commits_in_range,
     get_commit_metadata,
     get_commits_in_a_merge,
+    assemble_pr_template,
 )
 
 logger = logging.getLogger("upsint")
@@ -105,7 +106,20 @@ def create_pr(target_remote, target_branch):
 
     git_push()
 
-    title, body = prompt_for_pr_content(get_commit_msgs(base))
+    commit_msgs = get_commit_msgs(base)
+    project_pr_template = None
+    if "github.com" in git_project.get_web_url():
+        try:
+            project_pr_template = git_project.get_file_content(
+                ".github/PULL_REQUEST_TEMPLATE.md"
+            )
+        except FileNotFoundError:
+            logger.debug("No PR template found.")
+    template = assemble_pr_template(
+        commit_msgs, project_pr_template=project_pr_template
+    )
+
+    title, body = prompt_for_pr_content(template)
 
     pr = git_project.create_pr(
         title, body, target_branch, app.get_current_branch(), fork_username=username

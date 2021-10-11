@@ -22,7 +22,7 @@ import tempfile
 import datetime
 from dataclasses import dataclass
 from time import sleep
-from typing import Iterable, Dict, List
+from typing import Iterable, Dict, List, Optional
 
 from upsint.constant import CLONE_TIMEOUT
 
@@ -111,10 +111,27 @@ def get_remote_url(remote):
     return url.decode("utf-8").strip()
 
 
-def prompt_for_pr_content(commit_msgs):
+def assemble_pr_template(commit_msgs: str, project_pr_template: Optional[str]) -> str:
+    """
+    Prepare text for the prompt to fill in details when creating a new PR.
+    """
+    # first line is always the PR title
+    template = "Title of this PR\n\n"
+    # here we just either show the project's template or provide a list of commit messages
+    if project_pr_template:
+        template = f"{template}{project_pr_template}\n{commit_msgs}"
+    else:
+        template = f"{template}PR body:\n{commit_msgs}"
+    return template
+
+
+def prompt_for_pr_content(template: str):
+    """
+    Create a temporary file and feed it to $EDITOR so the user defines content
+    for the PR, mainly title and body.
+    """
     t = tempfile.NamedTemporaryFile(delete=False, prefix="gh.")
     try:
-        template = "Title of this PR\n\nPR body:\n{}".format(commit_msgs)
         template_b = template.encode("utf-8")
         t.write(template_b)
         t.flush()
