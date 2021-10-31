@@ -14,11 +14,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+import click
 import logging
 import os
 import re
 import subprocess
-import tempfile
 import datetime
 from dataclasses import dataclass
 from time import sleep
@@ -130,35 +130,20 @@ def prompt_for_pr_content(template: str):
     Create a temporary file and feed it to $EDITOR so the user defines content
     for the PR, mainly title and body.
     """
-    t = tempfile.NamedTemporaryFile(delete=False, prefix="gh.")
-    try:
-        template_b = template.encode("utf-8")
-        t.write(template_b)
-        t.flush()
-        t.close()
-        try:
-            editor_cmdstring = os.environ["EDITOR"]
-        except KeyError:
-            logger.warning("EDITOR environment variable is not set")
-            editor_cmdstring = "/bin/vi"
+    if "EDITOR" in os.environ:
+        pr_content = click.edit(text=template, editor=os.getenv("EDITOR"))
+    else:
+        logger.warning(
+            "EDITOR environment variable is not set. Relying on click's automatic detection"
+        )
+        pr_content = click.edit(text=template)
+    if pr_content is None:
+        raise RuntimeError("PR description was not saved")
 
-        logger.debug("using editor: %s", editor_cmdstring)
+    if template.strip() == pr_content.strip():
+        logger.error("PR description is unchanged")
+        raise RuntimeError("The template is not changed, the PR won't be created.")
 
-        cmd = [editor_cmdstring, t.name]
-
-        logger.debug("invoking editor: %s", cmd)
-        proc = subprocess.Popen(cmd)
-        ret = proc.wait()
-        logger.debug("editor returned : %s", ret)
-        if ret:
-            raise RuntimeError("error from editor")
-        with open(t.name) as fd:
-            pr_content = fd.read()
-        if template == pr_content:
-            logger.error("PR description is unchanged")
-            raise RuntimeError("The template is not changed, the PR won't be created.")
-    finally:
-        os.unlink(t.name)
     logger.debug("got: %s", pr_content)
     title, body = pr_content.split("\n", 1)
     logger.debug("title: %s", title)
