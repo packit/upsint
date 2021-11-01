@@ -130,13 +130,7 @@ def prompt_for_pr_content(template: str):
     Create a temporary file and feed it to $EDITOR so the user defines content
     for the PR, mainly title and body.
     """
-    if "EDITOR" in os.environ:
-        pr_content = click.edit(text=template, editor=os.getenv("EDITOR"))
-    else:
-        logger.warning(
-            "EDITOR environment variable is not set. Relying on click's automatic detection"
-        )
-        pr_content = click.edit(text=template)
+    pr_content = click.edit(text=template)
     if pr_content is None:
         raise RuntimeError("PR description was not saved")
 
