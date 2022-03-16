@@ -37,5 +37,5 @@ repos:
     hooks:
       - id: check-rebase
         args:
-          - git://github.com/packit-service/upsint.git
+          - https://github.com/packit-service/upsint.git
         stages: [manual, push]
