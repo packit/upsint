@@ -4,8 +4,10 @@ import re
 import time
 
 import github
+import requests
 
 from upsint.service import Service
+from upsint.retry_utils import retry_on_github_errors, validate_github_token_permissions
 from upsint.utils import (
     clone_repo_and_cd_inside,
     fetch_all,
@@ -90,6 +92,12 @@ class GithubService(Service):
         set_origin_remote(user_repo.ssh_url, pull_merge_name="pull")
         fetch_all()
 
+    @retry_on_github_errors(max_retries=3, base_delay=2.0)
+    def _create_pull_request_with_retry(self, **opts):
+        """Create pull request with retry logic and better error handling"""
+        return self.repo.create_pull(**opts)
+    
+    @retry_on_github_errors(max_retries=3, base_delay=1.0)
     def _fork_gracefully(self, target_repo):
         """ fork if not forked, return forked repo """
         try:
@@ -110,6 +118,21 @@ class GithubService(Service):
         :param current_branch: str, local branch with the changes
         :return: URL to the PR
         """
+        # Validate token permissions before attempting to create PR
+        validation = validate_github_token_permissions(self.g, self.repo.full_name)
+        if not validation['valid']:
+            error_msg = "Cannot create pull request due to token issues:\n"
+            for issue in validation['issues']:
+                error_msg += f"- {issue}\n"
+            raise RuntimeError(error_msg.strip())
+        
+        # Show rate limit info if we're getting low
+        rate_info = validation.get('rate_limit', {})
+        if rate_info.get('remaining', 0) < 100:
+            logger.warning(
+                f"GitHub API rate limit is low: {rate_info['remaining']}/{rate_info['limit']} remaining"
+            )
+        
         head = "{}:{}".format(self.user.login, current_branch)
         logger.debug("PR head is: %s", head)
 
@@ -126,12 +149,13 @@ class GithubService(Service):
             "head": head,
         }
         logger.debug("PR to be created: %s", json.dumps(opts, indent=2))
-        # TODO: configurable, prompt instead maybe?
-        time.sleep(4.0)
-        pr = self.repo.create_pull(**opts)
+        
+        # Create PR with retry mechanism
+        pr = self._create_pull_request_with_retry(**opts)
         logger.info("PR link: %s", pr.html_url)
         return pr.html_url
 
+    @retry_on_github_errors(max_retries=3, base_delay=1.0)
     def list_pull_requests(self):
         """
         Get list of pull-requests for the repository.
@@ -149,6 +173,7 @@ class GithubService(Service):
             for pr in prs
         ]
 
+    @retry_on_github_errors(max_retries=3, base_delay=1.0)
     def list_labels(self):
         """
         Get list of labels in the repository.
@@ -168,13 +193,18 @@ class GithubService(Service):
         for label in labels:
             if label.name not in current_label_names:
                 color = self._normalize_label_color(color=label.color)
-                self.repo.create_label(
+                self._create_label_with_retry(
                     name=label.name, color=color, description=label.description or ""
                 )
-
                 changes += 1
         return changes
+    
+    @retry_on_github_errors(max_retries=3, base_delay=1.0)
+    def _create_label_with_retry(self, name, color, description):
+        """Create label with retry logic"""
+        return self.repo.create_label(name=name, color=color, description=description)
 
+    @retry_on_github_errors(max_retries=3, base_delay=1.0)
     def list_tags(self):
         """
         Get list of tags in the repository.

@@ -25,6 +25,7 @@ from ogr.abstract import CommitStatus
 from tabulate import tabulate
 
 from upsint.core import App
+from upsint.retry_utils import GitHubAPIError, RateLimitExceeded
 from upsint.utils import (
     git_push,
     prompt_for_pr_content,
@@ -43,8 +44,16 @@ logger = logging.getLogger("upsint")
 
 
 @click.group()
-def upsint():
-    pass
+@click.option('--debug', is_flag=True, help='Enable debug logging')
+@click.pass_context
+def upsint(ctx, debug):
+    ctx.ensure_object(dict)
+    if debug:
+        logging.basicConfig(level=logging.DEBUG, format='%(levelname)s: %(message)s')
+        ctx.obj['debug'] = True
+    else:
+        logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
+        ctx.obj['debug'] = False
 
 
 @click.command(name="fork")
@@ -84,49 +93,74 @@ def fork(repo):
 @click.command(name="create-pr")
 @click.argument("target_remote", type=click.STRING, required=False, default="upstream")
 @click.argument("target_branch", type=click.STRING, required=False, default=None)
-def create_pr(target_remote, target_branch):
+@click.pass_context
+def create_pr(ctx, target_remote, target_branch):
     """
     Create a pull or a merge request against upstream remote.
 
     The default projects's branch is used implicitly
     (which everyone can configure in their project settings).
     """
-    app = App()
+    try:
+        app = App()
 
-    url = app.guess_remote_url()
-    git_project = app.get_git_project(url)
+        url = app.guess_remote_url()
+        git_project = app.get_git_project(url)
 
-    username = git_project.service.user.get_username()
+        username = git_project.service.user.get_username()
 
-    if not target_branch:
-        target_branch = git_project.default_branch
-        logger.info(f"Branch not specified, using {target_branch}.")
+        if not target_branch:
+            target_branch = git_project.default_branch
+            logger.info(f"Branch not specified, using {target_branch}.")
 
-    base = "{}/{}".format(target_remote, target_branch)
+        base = "{}/{}".format(target_remote, target_branch)
 
-    git_push()
+        git_push()
 
-    commit_msgs = get_commit_msgs(base)
-    project_pr_template = None
-    if "github.com" in git_project.get_web_url():
-        try:
-            project_pr_template = git_project.get_file_content(
-                ".github/PULL_REQUEST_TEMPLATE.md"
-            )
-        except FileNotFoundError:
-            logger.debug("No PR template found.")
-    template = assemble_pr_template(
-        commit_msgs, project_pr_template=project_pr_template
-    )
+        commit_msgs = get_commit_msgs(base)
+        project_pr_template = None
+        if "github.com" in git_project.get_web_url():
+            try:
+                project_pr_template = git_project.get_file_content(
+                    ".github/PULL_REQUEST_TEMPLATE.md"
+                )
+            except FileNotFoundError:
+                logger.debug("No PR template found.")
+        template = assemble_pr_template(
+            commit_msgs, project_pr_template=project_pr_template
+        )
 
-    title, body = prompt_for_pr_content(template)
+        title, body = prompt_for_pr_content(template)
 
-    pr = git_project.create_pr(
-        title, body, target_branch, app.get_current_branch(), fork_username=username
-    )
+        pr = git_project.create_pr(
+            title, body, target_branch, app.get_current_branch(), fork_username=username
+        )
 
-    logger.info("PR link: %s", pr.url)
-    print(pr.url)
+        logger.info("PR link: %s", pr.url)
+        print(pr.url)
+
+    except RateLimitExceeded as e:
+        click.echo(click.style("Error: GitHub API rate limit exceeded", fg="red"), err=True)
+        click.echo(str(e), err=True)
+        if ctx.obj.get('debug'):
+            import traceback
+            traceback.print_exc()
+        sys.exit(1)
+    
+    except GitHubAPIError as e:
+        click.echo(click.style("Error: GitHub API error", fg="red"), err=True)
+        click.echo(str(e), err=True)
+        if ctx.obj.get('debug'):
+            import traceback
+            traceback.print_exc()
+        sys.exit(1)
+        
+    except Exception as e:
+        click.echo(click.style(f"Error: {str(e)}", fg="red"), err=True)
+        if ctx.obj.get('debug'):
+            import traceback
+            traceback.print_exc()
+        sys.exit(1)
 
 
 @click.command(

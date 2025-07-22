@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+import logging
 import re
 from typing import Optional, Iterable
 
@@ -21,12 +22,15 @@ from ogr import get_instances_from_dict, get_project
 from ogr.abstract import GitProject, GitService, PullRequest
 
 from upsint.conf import Conf
+from upsint.retry_utils import retry_on_github_errors
 from upsint.utils import (
     get_current_branch_name,
     get_remote_url,
     list_local_branches,
     git_branch_d,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class App:
@@ -77,6 +81,7 @@ class App:
         """
         git_branch_d(branch_name)
 
+    @retry_on_github_errors(max_retries=3, base_delay=1.0)
     def get_git_project(self, url: str) -> GitProject:
         if not url:
             url = self.guess_remote_url()
