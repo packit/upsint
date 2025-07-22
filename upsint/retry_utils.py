@@ -267,7 +267,7 @@ def validate_github_token_permissions(github_client: github.Github, repo_full_na
             
             # Check specific permissions
             validation_result['permissions']['can_push'] = repo.permissions.push
-            validation_result['permissions']['can_create_pr'] = repo.permissions.push or repo.permissions.pull
+            validation_result['permissions']['can_create_pr'] = repo.permissions.push and repo.permissions.pull
             
             if not validation_result['permissions']['can_create_pr']:
                 validation_result['issues'].append(

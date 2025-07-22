@@ -22,11 +22,12 @@ import sys
 import traceback
 
 import click
+from ogr import GithubService
 from ogr.abstract import CommitStatus
 from tabulate import tabulate
 
 from upsint.core import App
-from upsint.retry_utils import GitHubAPIError, RateLimitExceeded
+from upsint.retry_utils import validate_github_token_permissions
 from upsint.utils import (
     git_push,
     prompt_for_pr_content,
@@ -108,6 +109,12 @@ def create_pr(ctx, target_remote, target_branch):
         url = app.guess_remote_url()
         git_project = app.get_git_project(url)
 
+        if isinstance(git_project.service, GithubService):
+            validation_result = validate_github_token_permissions(git_project.service.github, git_project.full_repo_name)
+            logger.debug(validation_result)
+            if not validation_result['valid']:
+                raise RuntimeError(f"We are unable to interact with repo {git_project.full_repo_name}")
+
         username = git_project.service.user.get_username()
 
         if not target_branch:
@@ -133,6 +140,7 @@ def create_pr(ctx, target_remote, target_branch):
 
         title, body = prompt_for_pr_content(template)
 
+        import ipdb; ipdb.set_trace()
         pr = git_project.create_pr(
             title, body, target_branch, app.get_current_branch(), fork_username=username
         )
