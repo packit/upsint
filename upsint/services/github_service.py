@@ -1,10 +1,8 @@
 import json
 import logging
 import re
-import time
 
 import github
-import requests
 
 from upsint.service import Service
 from upsint.retry_utils import retry_on_github_errors, validate_github_token_permissions
@@ -102,7 +100,7 @@ class GithubService(Service):
         """ fork if not forked, return forked repo """
         try:
             target_repo.full_name
-        except github.GithubException.UnknownObjectException:
+        except github.UnknownObjectException:
             logger.error("repository doesn't exist")
             raise RuntimeError("repo %s not found" % target_repo)
         logger.info("forking repo %s", target_repo)
@@ -149,6 +147,8 @@ class GithubService(Service):
             "head": head,
         }
         logger.debug("PR to be created: %s", json.dumps(opts, indent=2))
+        # wait before creating, good time to ^C now if needed
+        time.sleep(4.0)
         
         # Create PR with retry mechanism
         pr = self._create_pull_request_with_retry(**opts)

@@ -19,7 +19,7 @@ import logging
 import random
 import time
 from functools import wraps
-from typing import Any, Callable, Dict, Optional, Type, Union
+from typing import Any, Callable, Dict, Optional
 
 import github
 import requests
@@ -101,7 +101,6 @@ def retry_on_github_errors(
     max_retries: int = 5,
     base_delay: float = 1.0,
     max_delay: float = 60.0,
-    backoff_factor: float = 2.0,
     jitter: bool = True
 ):
     """
@@ -111,7 +110,6 @@ def retry_on_github_errors(
         max_retries: Maximum number of retry attempts
         base_delay: Initial delay between retries in seconds
         max_delay: Maximum delay between retries in seconds
-        backoff_factor: Multiplier for exponential backoff
         jitter: Whether to add random jitter to delays
     """
     def decorator(func: Callable) -> Callable:

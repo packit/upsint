@@ -19,6 +19,7 @@ import logging
 import re
 import subprocess
 import sys
+import traceback
 
 import click
 from ogr.abstract import CommitStatus
@@ -98,7 +99,7 @@ def create_pr(ctx, target_remote, target_branch):
     """
     Create a pull or a merge request against upstream remote.
 
-    The default projects's branch is used implicitly
+    The default project's branch is used implicitly
     (which everyone can configure in their project settings).
     """
     try:
@@ -139,26 +140,9 @@ def create_pr(ctx, target_remote, target_branch):
         logger.info("PR link: %s", pr.url)
         print(pr.url)
 
-    except RateLimitExceeded as e:
-        click.echo(click.style("Error: GitHub API rate limit exceeded", fg="red"), err=True)
-        click.echo(str(e), err=True)
-        if ctx.obj.get('debug'):
-            import traceback
-            traceback.print_exc()
-        sys.exit(1)
-    
-    except GitHubAPIError as e:
-        click.echo(click.style("Error: GitHub API error", fg="red"), err=True)
-        click.echo(str(e), err=True)
-        if ctx.obj.get('debug'):
-            import traceback
-            traceback.print_exc()
-        sys.exit(1)
-        
     except Exception as e:
         click.echo(click.style(f"Error: {str(e)}", fg="red"), err=True)
         if ctx.obj.get('debug'):
-            import traceback
             traceback.print_exc()
         sys.exit(1)
 
