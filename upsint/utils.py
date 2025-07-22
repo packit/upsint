@@ -22,7 +22,9 @@ import subprocess
 import datetime
 from dataclasses import dataclass
 from time import sleep
-from typing import Iterable, Dict, List, Optional
+from typing import Iterable, Dict, List, Optional, Any
+
+import github
 
 from upsint.constant import CLONE_TIMEOUT
 
@@ -267,3 +269,66 @@ def get_commit_metadata(commit_hash: str) -> CommitMetadata:
     reg = r"Reviewed\-by:.+"
     commit_body = re.sub(reg, "", commit_body, flags=re.DOTALL).strip()
     return CommitMetadata(message=commit_subject, body=commit_body)
+
+
+def validate_github_token_permissions(github_client: github.Github, repo_full_name: str) -> Dict[str, Any]:
+    """
+    Validate GitHub token permissions for repository operations
+
+    Args:
+        github_client: Authenticated GitHub client
+        repo_full_name: Repository in format "owner/repo"
+
+    Returns:
+        Dictionary with validation results
+    """
+    validation_result = {
+        'valid': True,
+        'issues': [],
+        'permissions': {},
+        'rate_limit': {}
+    }
+
+    try:
+        # Check rate limit status
+        rate_limit = github_client.get_rate_limit()
+        validation_result['rate_limit'] = {
+            'remaining': rate_limit.core.remaining,
+            'limit': rate_limit.core.limit,
+            'reset_time': rate_limit.core.reset.timestamp()
+        }
+
+        if rate_limit.core.remaining < 10:
+            validation_result['issues'].append(
+                f"Low rate limit remaining: {rate_limit.core.remaining}/{rate_limit.core.limit}"
+            )
+
+        # Check if user can access repository
+        try:
+            repo = github_client.get_repo(repo_full_name)
+            validation_result['permissions']['repo_access'] = True
+
+            # Check specific permissions
+            validation_result['permissions']['can_push'] = repo.permissions.push
+            validation_result['permissions']['can_create_pr'] = repo.permissions.push and repo.permissions.pull
+
+            if not validation_result['permissions']['can_create_pr']:
+                validation_result['issues'].append(
+                    "Token doesn't have permission to create pull requests in this repository"
+                )
+                validation_result['valid'] = False
+
+        except github.UnknownObjectException:
+            validation_result['issues'].append(f"Repository {repo_full_name} not found or not accessible")
+            validation_result['valid'] = False
+            validation_result['permissions']['repo_access'] = False
+
+    except github.BadCredentialsException:
+        validation_result['issues'].append("GitHub token is invalid or expired")
+        validation_result['valid'] = False
+
+    except Exception as e:
+        validation_result['issues'].append(f"Unexpected error during validation: {e}")
+        validation_result['valid'] = False
+
+    return validation_result
