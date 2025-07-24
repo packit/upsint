@@ -20,7 +20,7 @@ from upsint.utils import clone_repo_and_cd_inside, set_upstream_remote
 
 
 def call_upsint(parameters, envs=None, cwd=None, return_output=False):
-    """ invoke packit in a subprocess """
+    """invoke upsint in a subprocess"""
     cmd = ["python3", "-m", "upsint.cli"] + parameters
     if return_output:
         return subprocess.check_output(cmd, env=envs, cwd=cwd).decode()

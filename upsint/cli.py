@@ -46,16 +46,16 @@ logger = logging.getLogger("upsint")
 
 
 @click.group()
-@click.option('--debug', is_flag=True, help='Enable debug logging')
+@click.option("--debug", is_flag=True, help="Enable debug logging")
 @click.pass_context
 def upsint(ctx, debug):
     ctx.ensure_object(dict)
     if debug:
-        logging.basicConfig(level=logging.DEBUG, format='%(levelname)s: %(message)s')
-        ctx.obj['debug'] = True
+        logging.basicConfig(level=logging.DEBUG, format="%(levelname)s: %(message)s")
+        ctx.obj["debug"] = True
     else:
-        logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
-        ctx.obj['debug'] = False
+        logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
+        ctx.obj["debug"] = False
 
 
 @click.command(name="fork")
@@ -110,10 +110,14 @@ def create_pr(ctx, target_remote, target_branch):
         git_project = app.get_git_project(url)
 
         if isinstance(git_project.service, GithubService):
-            validation_result = validate_github_token_permissions(git_project.service.github, git_project.full_repo_name)
+            validation_result = validate_github_token_permissions(
+                git_project.service.github, git_project.full_repo_name
+            )
             logger.debug(validation_result)
-            if not validation_result['valid']:
-                raise RuntimeError(f"We are unable to interact with repo {git_project.full_repo_name}")
+            if not validation_result["valid"]:
+                raise RuntimeError(
+                    f"We are unable to interact with repo {git_project.full_repo_name}"
+                )
 
         username = git_project.service.user.get_username()
 
@@ -149,7 +153,7 @@ def create_pr(ctx, target_remote, target_branch):
 
     except Exception as e:
         click.echo(click.style(f"Error: {str(e)}", fg="red"), err=True)
-        if ctx.obj.get('debug'):
+        if ctx.obj.get("debug"):
             traceback.print_exc()
         sys.exit(1)
 
