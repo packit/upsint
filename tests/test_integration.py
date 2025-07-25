@@ -55,7 +55,7 @@ def initiate_git_repo(
         ["git", "commit", "-a", "-m", "branch change #2"], cwd=directory
     )
 
-    subprocess.check_call(["git", "checkout", "master"], cwd=directory)
+    subprocess.check_call(["git", "checkout", "main"], cwd=directory)
     merge_message = (
         "Merge pull request #760 from jpopelka/specfile-add_patches\n"
         "\n"
